@@ -1,0 +1,21 @@
+server:
+  port: 8080 # 后端服务启动端口
+
+spring:
+  datasource:
+    # 替换为本地的 MySQL 账号密码
+    username: root
+    password: myyee112818
+    url: jdbc:mysql://localhost:3306/ddl_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis-plus:
+  configuration:
+    # 开启驼峰命名自动映射 (如 user_id 自动映射为 userId)
+    map-underscore-to-camel-case: true
+    # 打印底层 SQL 语句，方便调试
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      # 全局主键策略：对应你的 String 类型 UUID
+      id-type: assign_uuid
