@@ -21,7 +21,7 @@ public class Result<T> {
         this.data = data;
     }
 
-    // --- 成功返回 ---
+    // --- 成功 ---
     public static <T> Result<T> success() {
         return new Result<>(200, "操作成功", null);
     }
@@ -34,7 +34,7 @@ public class Result<T> {
         return new Result<>(200, msg, data);
     }
 
-    // --- 失败返回 ---
+    // --- 失败 ---
     public static <T> Result<T> error(String msg) {
         return new Result<>(500, msg, null);
     }
