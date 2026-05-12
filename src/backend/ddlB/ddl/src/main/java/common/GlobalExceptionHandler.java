@@ -20,5 +20,5 @@ public class GlobalExceptionHandler {
 
     // 补充自定义异常的拦截，例如：
     // @ExceptionHandler(CustomBusinessException.class)
-    // ...
+    //其他
 }
