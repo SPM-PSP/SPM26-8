@@ -7,7 +7,8 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 对应前端 Note 模型
+ * 对应前端
+ * Note模型
  */
 @Data
 @TableName("note")
