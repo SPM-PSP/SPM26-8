@@ -23,7 +23,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { TrendingUp, Target as TargetIcon, Clock, Zap } from 'lucide-react';
+import { TrendingUp, Target as TargetIcon, Zap } from 'lucide-react';
+import { AiEfficiencyCard } from '../components/ai/AiEfficiencyCard';
 
 const COLORS = ['#d4726f', '#e9b893', '#88a096', '#b8a89d', '#9b9ea4'];
 
@@ -128,6 +129,8 @@ export function Statistics() {
       </div>
 
       <div className="max-w-screen-xl mx-auto px-6 py-5 space-y-4">
+        <AiEfficiencyCard context={{ todos, period }} />
+
         {/* 总览卡片 */}
         <div className="grid grid-cols-3 gap-3">
           {stats.map((stat, index) => {

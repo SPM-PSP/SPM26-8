@@ -17,6 +17,17 @@ export interface BackendUser {
   avatarUrl: string;
   isReminderOn: number;  // 1 开启, 0 关闭
   defaultAdvanceMinutes: number;
+  email?: string;
+  remindBefore24h?: number;
+  remindBefore2h?: number;
+}
+
+export interface ReminderSettingsDTO {
+  openid: string;
+  email?: string;
+  isReminderOn?: number;
+  remindBefore24h?: number;
+  remindBefore2h?: number;
 }
 
 // TodoTask.java → 表 todo_task
@@ -27,6 +38,8 @@ export interface BackendTodoTask {
   status: number;  // 0 未完成, 1 已完成
   priority: number;  // 1-4 对应四象限
   createdAt: string;
+  beginTime?: string;
+  endTime?: string;
   planId?: string;
   targetId?: string;
   userId: string;

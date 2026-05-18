@@ -9,6 +9,9 @@ CREATE TABLE IF NOT EXISTS `user` (
   `avatar_url` varchar(255) DEFAULT NULL COMMENT '头像',
   `is_reminder_on` tinyint DEFAULT 1 COMMENT '1开启0关闭',
   `default_advance_minutes` int DEFAULT 30 COMMENT '默认提前提醒分钟',
+  `email` varchar(128) DEFAULT NULL COMMENT '绑定邮箱',
+  `remind_before_24h` tinyint DEFAULT 1 COMMENT '提前24小时邮件',
+  `remind_before_2h` tinyint DEFAULT 1 COMMENT '提前2小时邮件',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`uuid`),
@@ -22,12 +25,24 @@ CREATE TABLE IF NOT EXISTS `todo_task` (
   `status` tinyint DEFAULT 0 COMMENT '0未完成1已完成',
   `priority` int DEFAULT 0 COMMENT '优先级/四象限数值',
   `created_at` varchar(64) DEFAULT NULL,
+  `begin_time` varchar(64) DEFAULT NULL COMMENT '开始时间 ISO8601',
+  `end_time` varchar(64) DEFAULT NULL COMMENT '结束/截止时间 ISO8601',
   `plan_id` varchar(64) DEFAULT NULL,
   `target_id` varchar(64) DEFAULT NULL,
   `user_id` varchar(128) NOT NULL,
   PRIMARY KEY (`uuid`),
   KEY `idx_todo_user` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='日程';
+
+CREATE TABLE IF NOT EXISTS `todo_reminder_log` (
+  `uuid` varchar(64) NOT NULL,
+  `todo_id` varchar(64) NOT NULL,
+  `user_id` varchar(128) NOT NULL,
+  `reminder_type` varchar(8) NOT NULL COMMENT '24h或2h',
+  `sent_at` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`uuid`),
+  KEY `idx_reminder_todo` (`todo_id`, `reminder_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='任务邮件提醒记录';
 
 CREATE TABLE IF NOT EXISTS `target` (
   `uuid` varchar(64) NOT NULL,

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
-import { Plus, ListTodo, AlertCircle, Clock, Target as TargetIcon, Clipboard, Mic, Edit3 } from 'lucide-react';
+import { Plus, ListTodo, AlertCircle, Clock, Target as TargetIcon } from 'lucide-react';
 import { EmptyState } from '../components/EmptyState';
 import { Badge } from '../components/ui/badge';
 import { Checkbox } from '../components/ui/checkbox';
@@ -8,9 +8,9 @@ import { useTodos } from '../hooks/useTodos';
 import { useTargets } from '../hooks/useTargets';
 import { usePlans } from '../hooks/usePlans';
 import { FilterStatus } from '../types';
-import { format, differenceInHours, differenceInMinutes, differenceInSeconds } from 'date-fns';
+import { format, differenceInHours, differenceInSeconds } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { TodoBreakdownPanel } from '../components/ai/TodoBreakdownPanel';
 
 const LEVEL_CONFIG = {
   'urgent-important': { label: '重要紧急', color: 'bg-[#d4726f]', icon: AlertCircle },
@@ -24,16 +24,23 @@ export function TodoList() {
   const { targets } = useTargets();
   const { plans } = usePlans();
   const [filter, setFilter] = useState<FilterStatus>('all');
-  const [showQuickInput, setShowQuickInput] = useState(false);
+  const [breakdownId, setBreakdownId] = useState<string | null>(null);
+  const [now, setNow] = useState(() => new Date());
 
-  // 获取临期任务（24小时内）
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const isWithin24Hours = (endTime: string) => {
+    const hoursLeft = differenceInHours(new Date(endTime), now);
+    return hoursLeft >= 0 && hoursLeft < 24;
+  };
+
   const urgentTodos = todos
-    .filter(todo => {
+    .filter((todo) => {
       if (todo.completed || !todo.endTime) return false;
-      const now = new Date();
-      const endTime = new Date(todo.endTime);
-      const hoursLeft = differenceInHours(endTime, now);
-      return hoursLeft >= 0 && hoursLeft < 24;
+      return isWithin24Hours(todo.endTime);
     })
     .sort((a, b) => new Date(a.endTime!).getTime() - new Date(b.endTime!).getTime());
 
@@ -42,14 +49,11 @@ export function TodoList() {
     if (filter === 'completed') return todo.completed;
     if (filter === 'urgent') {
       if (todo.completed || !todo.endTime) return false;
-      const hoursLeft = differenceInHours(new Date(todo.endTime), new Date());
-      return hoursLeft >= 0 && hoursLeft < 24;
+      return isWithin24Hours(todo.endTime);
     }
     return true;
   }).sort((a, b) => {
-    if (a.completed !== b.completed) {
-      return a.completed ? 1 : -1;
-    }
+    if (a.completed !== b.completed) return a.completed ? 1 : -1;
     if (a.endTime && b.endTime) {
       return new Date(a.endTime).getTime() - new Date(b.endTime).getTime();
     }
@@ -58,43 +62,45 @@ export function TodoList() {
 
   const getTargetName = (targetId?: string) => {
     if (!targetId) return null;
-    const target = targets.find(t => t.id === targetId);
-    return target?.title;
+    return targets.find(t => t.id === targetId)?.title;
   };
 
   const getPlanName = (planId?: string) => {
     if (!planId) return null;
-    const plan = plans.find(p => p.id === planId);
-    return plan?.title;
+    return plans.find(p => p.id === planId)?.title;
   };
 
   const handleToggleComplete = (id: string, completed: boolean) => {
     updateTodo(id, { completed: !completed });
   };
 
-  const getCountdown = (endTime: string) => {
-    const now = new Date();
-    const end = new Date(endTime);
-    const hours = differenceInHours(end, now);
-    const minutes = differenceInMinutes(end, now) % 60;
-    const seconds = differenceInSeconds(end, now) % 60;
+  const handleAdoptSubtasks = (todoId: string, subtasks: string[]) => {
+    const todo = todos.find(t => t.id === todoId);
+    if (!todo) return;
+    const block = subtasks.map((s, i) => `${i + 1}. ${s}`).join('\n');
+    const newDesc = todo.desc
+      ? `${todo.desc}\n\n【AI 子任务】\n${block}`
+      : `【AI 子任务】\n${block}`;
+    updateTodo(todoId, { desc: newDesc });
+  };
 
-    if (hours < 0) return '已逾期';
+  const getCountdown = (endTime: string) => {
+    const end = new Date(endTime);
+    const totalSeconds = differenceInSeconds(end, now);
+    if (totalSeconds < 0) return '已逾期';
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
-  const isOverdue = (endTime: string) => {
-    return new Date(endTime) < new Date();
-  };
+  const isOverdue = (endTime: string) => new Date(endTime) < now;
 
   return (
     <div className="min-h-screen bg-[#f8f8f6] pb-20">
-      {/* 顶部栏 */}
       <div className="bg-white/95 backdrop-blur-lg" style={{boxShadow: '0 2px 16px rgba(0, 0, 0, 0.04)'}}>
         <div className="max-w-screen-xl mx-auto px-6 py-5">
           <h1 className="text-xl font-semibold text-[#4a4a4a] mb-4">任务</h1>
-
-          {/* 快速筛选器 */}
           <div className="flex gap-2 overflow-x-auto pb-1">
             {[
               { value: 'all', label: '全部' },
@@ -119,7 +125,6 @@ export function TodoList() {
       </div>
 
       <div className="max-w-screen-xl mx-auto px-6 py-5 space-y-5">
-        {/* 临期任务倒计时卡片 */}
         {urgentTodos.length > 0 && filter !== 'completed' && (
           <div className="bg-gradient-to-br from-[#d4726f] to-[#e9b893] rounded-[20px] p-5 text-white" style={{boxShadow: '0 4px 20px rgba(212, 114, 111, 0.2)'}}>
             <div className="flex items-center gap-2 mb-3">
@@ -143,31 +148,30 @@ export function TodoList() {
           </div>
         )}
 
-        {/* 任务列表 */}
         {filteredTodos.length === 0 ? (
           <EmptyState
             icon={ListTodo}
             title={filter === 'all' ? '暂无任务' : filter === 'active' ? '暂无待办任务' : filter === 'urgent' ? '暂无临期任务' : '暂无已完成的任务'}
-            description="点击右下角按钮创建任务"
+            description="点击右下角 + 使用灵动输入创建任务"
           />
         ) : (
           <div className="space-y-3">
             {filteredTodos.map((todo) => {
               const levelConfig = LEVEL_CONFIG[todo.level];
-              const LevelIcon = levelConfig.icon;
               const targetName = getTargetName(todo.targetId);
               const planName = getPlanName(todo.planId);
               const overdueTask = todo.endTime && isOverdue(todo.endTime) && !todo.completed;
+              const urgentTask =
+                todo.endTime && !todo.completed && isWithin24Hours(todo.endTime);
+              const isBreakdownOpen = breakdownId === todo.id;
 
               return (
                 <div
                   key={todo.id}
-                  className={`bg-white rounded-[20px] p-4 transition-all ${
-                    todo.completed ? 'opacity-50' : ''
-                  }`}
+                  className={`bg-white rounded-[20px] p-4 transition-all ${todo.completed ? 'opacity-50' : ''}`}
                   style={{boxShadow: '0 2px 12px rgba(0, 0, 0, 0.04)'}}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="flex flex-wrap items-start gap-3">
                     <div className="mt-1">
                       <Checkbox
                         checked={todo.completed}
@@ -183,36 +187,43 @@ export function TodoList() {
                         </h3>
                         <div className={`w-2 h-2 rounded-full ${levelConfig.color} mt-2 flex-shrink-0`} />
                       </div>
-
                       {todo.desc && (
                         <p className="text-sm text-[#8b8680] mb-2 line-clamp-2 leading-relaxed">{todo.desc}</p>
                       )}
-
                       <div className="flex items-center gap-2 flex-wrap">
-                        {overdueTask && (
-                          <span className="text-xs text-[#d4726f] font-medium">已逾期</span>
-                        )}
-
+                        {overdueTask && <span className="text-xs text-[#d4726f] font-medium">已逾期</span>}
                         {todo.endTime && (
-                          <div className={`flex items-center gap-1 text-xs ${overdueTask ? 'text-[#d4726f]' : 'text-[#8b8680]'}`}>
-                            <Clock className="w-3 h-3" />
-                            <span>{format(new Date(todo.endTime), 'MM/dd HH:mm', { locale: zhCN })}</span>
+                          <div className={`flex items-center gap-2 text-xs flex-wrap ${overdueTask ? 'text-[#d4726f]' : 'text-[#8b8680]'}`}>
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              <span>{format(new Date(todo.endTime), 'MM/dd HH:mm', { locale: zhCN })}</span>
+                            </div>
+                            {urgentTask && (
+                              <span className="font-mono bg-[#fef0ef] text-[#d4726f] px-2 py-0.5 rounded-md tabular-nums">
+                                {getCountdown(todo.endTime)}
+                              </span>
+                            )}
                           </div>
                         )}
-
                         {targetName && (
                           <Badge variant="outline" className="text-xs text-[#88a096] border-[#88a096] rounded-full">
                             {targetName}
                           </Badge>
                         )}
-
                         {planName && (
-                          <Badge variant="outline" className="text-xs rounded-full">
-                            {planName}
-                          </Badge>
+                          <Badge variant="outline" className="text-xs rounded-full">{planName}</Badge>
                         )}
                       </div>
                     </Link>
+
+                    {!todo.completed && (
+                      <TodoBreakdownPanel
+                        todo={todo}
+                        expanded={isBreakdownOpen}
+                        onToggle={() => setBreakdownId(isBreakdownOpen ? null : todo.id)}
+                        onAdopt={(subtasks) => handleAdoptSubtasks(todo.id, subtasks)}
+                      />
+                    )}
                   </div>
                 </div>
               );
@@ -221,49 +232,13 @@ export function TodoList() {
         )}
       </div>
 
-      {/* FAB悬浮按钮 */}
-      <button
-        onClick={() => setShowQuickInput(true)}
-        className="fixed right-6 bottom-24 w-14 h-14 bg-gradient-to-br from-[#d4726f] to-[#e9b893] rounded-full flex items-center justify-center text-white transition-all hover:scale-110 active:scale-95"
+      <Link
+        to="/todos/new"
+        className="fixed right-6 bottom-24 w-14 h-14 bg-gradient-to-br from-[#d4726f] to-[#e9b893] rounded-full flex items-center justify-center text-white transition-all hover:scale-110 active:scale-95 z-30"
         style={{boxShadow: '0 4px 20px rgba(212, 114, 111, 0.3)'}}
       >
         <Plus className="w-6 h-6" />
-      </button>
-
-      {/* 快捷输入面板 */}
-      <Dialog open={showQuickInput} onOpenChange={setShowQuickInput}>
-        <DialogContent className="rounded-[20px]">
-          <DialogHeader>
-            <DialogTitle>智能创建任务</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-3 gap-3 py-4">
-            <Link
-              to="/todos/new"
-              className="flex flex-col items-center gap-3 p-4 rounded-[16px] bg-[#f5f1ed] hover:bg-[#e8e4e0] transition-colors"
-              onClick={() => setShowQuickInput(false)}
-            >
-              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center">
-                <Edit3 className="w-6 h-6 text-[#3cc51f]" />
-              </div>
-              <span className="text-sm text-[#4a4a4a]">表单填写</span>
-            </Link>
-
-            <button className="flex flex-col items-center gap-3 p-4 rounded-[16px] bg-[#f5f1ed] hover:bg-[#e8e4e0] transition-colors">
-              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center">
-                <Clipboard className="w-6 h-6 text-[#88a096]" />
-              </div>
-              <span className="text-sm text-[#4a4a4a]">剪贴板</span>
-            </button>
-
-            <button className="flex flex-col items-center gap-3 p-4 rounded-[16px] bg-[#f5f1ed] hover:bg-[#e8e4e0] transition-colors">
-              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center">
-                <Mic className="w-6 h-6 text-[#e9b893]" />
-              </div>
-              <span className="text-sm text-[#4a4a4a]">语音录入</span>
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      </Link>
     </div>
   );
 }

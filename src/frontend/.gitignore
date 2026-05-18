@@ -2,3 +2,6 @@ node_modules
 dist
 *.local
 .npm-cache
+
+# 含 DeepSeek API Key，勿提交
+app/config/ai.config.ts
