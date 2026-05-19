@@ -213,7 +213,7 @@ export default function AddTodo() {
           <View>
             <Text style={{ fontSize: '28rpx', color: '#4a4a4a', marginBottom: '16rpx', display: 'block' }}>任务说明</Text>
             <View style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16rpx', padding: '20rpx', backgroundColor: '#f5f1ed' }}>
-              <textarea style={{ width: '100%', fontSize: '28rpx', color: '#4a4a4a', minHeight: '120rpx' }}
+              <input style={{ width: '100%', fontSize: '28rpx', color: '#4a4a4a' }}
                 value={desc} onInput={(e) => setDesc(e.detail.value)} placeholder="描述任务详情..." placeholderStyle="color: #ccc; font-size: 28rpx" />
             </View>
           </View>
@@ -308,9 +308,9 @@ export default function AddTodo() {
             <View style={{ marginBottom: '28rpx' }}>
               <Text style={{ fontSize: '28rpx', color: '#4a4a4a', marginBottom: '16rpx', display: 'block' }}>任务总结</Text>
               <View style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16rpx', padding: '20rpx', backgroundColor: '#f5f1ed' }}>
-                <textarea style={{ width: '100%', fontSize: '28rpx', color: '#4a4a4a', minHeight: '120rpx' }}
-                  value={summury} onInput={(e) => setSummury(e.detail.value)}
-                  placeholder="总结任务完成情况..." placeholderStyle="color: #ccc; font-size: 28rpx" />
+              <input style={{ width: '100%', fontSize: '28rpx', color: '#4a4a4a' }}
+                value={summury} onInput={(e) => setSummury(e.detail.value)}
+                placeholder="总结任务完成情况..." placeholderStyle="color: #ccc; font-size: 28rpx" />
               </View>
             </View>
             <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '28rpx', borderTop: '1px solid #f0f0f0' }}>

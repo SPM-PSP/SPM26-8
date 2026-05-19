@@ -186,7 +186,7 @@ export default function AddTarget() {
           <View style={{ marginBottom: '28rpx' }}>
             <Text style={{ fontSize: '28rpx', color: '#4a4a4a', marginBottom: '16rpx', display: 'block' }}>目标描述</Text>
             <View style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16rpx', padding: '20rpx', backgroundColor: '#f5f1ed' }}>
-              <textarea style={{ width: '100%', fontSize: '28rpx', color: '#4a4a4a', minHeight: '120rpx' }}
+              <input style={{ width: '100%', fontSize: '28rpx', color: '#4a4a4a' }}
                 value={desc} onInput={(e) => setDesc(e.detail.value)} placeholder="描述你的目标..." placeholderStyle="color: #ccc; font-size: 28rpx" />
             </View>
           </View>

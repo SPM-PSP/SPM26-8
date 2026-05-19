@@ -130,8 +130,8 @@ export default function AddNote() {
               border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16rpx',
               padding: '20rpx', backgroundColor: '#f5f1ed',
             }}>
-              <textarea
-                style={{ width: '100%', fontSize: '28rpx', color: '#4a4a4a', minHeight: '200rpx' }}
+              <input
+                style={{ width: '100%', fontSize: '28rpx', color: '#4a4a4a' }}
                 value={content}
                 onInput={(e) => setContent(e.detail.value)}
                 placeholder="写下你的想法..."
