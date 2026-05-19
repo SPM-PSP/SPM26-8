@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { useTargets } from '../hooks/useTargets';
 import { useTodos } from '../hooks/useTodos';
 import { usePlans } from '../hooks/usePlans';
+import { AiAssistantBubble } from '../components/ai/AiAssistantBubble';
 
 type ViewMode = 'list' | 'matrix';
 
@@ -203,6 +204,8 @@ export function TargetList() {
           </>
         )}
       </div>
+
+      <AiAssistantBubble todos={todos} />
     </div>
   );
 }

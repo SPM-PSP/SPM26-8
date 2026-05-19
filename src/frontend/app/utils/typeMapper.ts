@@ -29,11 +29,33 @@ const PRIORITY_TO_LEVEL: Record<number, Todo['level']> = {
   1: 'not-urgent-not-important',
 };
 
+// ==================== Todo 时间字段 ====================
+
+/** datetime-local / ISO → 存库用 ISO8601 */
+export function todoTimeForStorage(value?: string): string | undefined {
+  if (!value?.trim()) return undefined;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return undefined;
+  return d.toISOString();
+}
+
+/** 库中 ISO → 表单 datetime-local */
+export function todoTimeForInput(stored?: string): string | undefined {
+  if (!stored?.trim()) return undefined;
+  const d = new Date(stored);
+  if (Number.isNaN(d.getTime())) {
+    // 已是 yyyy-MM-ddTHH:mm 格式则原样返回
+    return stored.length >= 16 ? stored.slice(0, 16) : stored;
+  }
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 // ==================== Todo 映射函数 ====================
 
 /**
  * 前端 Todo → 后端 TodoTask
- * 注意：后端没有的字段（beginTime, endTime, category, isContinuous, summury）会被丢弃
+ * 注意：category、isContinuous、summury 仍仅存于本地
  */
 export function toBackendTodo(todo: Todo): BackendTodoTask {
   return {
@@ -43,6 +65,8 @@ export function toBackendTodo(todo: Todo): BackendTodoTask {
     status: todo.completed ? 1 : 0,  // boolean → number
     priority: LEVEL_TO_PRIORITY[todo.level] || 1,  // 四象限 → 数字
     createdAt: todo.createdAt,
+    beginTime: todoTimeForStorage(todo.beginTime),
+    endTime: todoTimeForStorage(todo.endTime),
     planId: todo.planId,
     targetId: todo.targetId,
     userId: MOCK_USER_ID,
@@ -51,7 +75,6 @@ export function toBackendTodo(todo: Todo): BackendTodoTask {
 
 /**
  * 后端 TodoTask → 前端 Todo
- * 注意：前端独有字段会被设置为默认值
  */
 export function fromBackendTodo(task: BackendTodoTask): Todo {
   return {
@@ -63,10 +86,9 @@ export function fromBackendTodo(task: BackendTodoTask): Todo {
     createdAt: task.createdAt,
     planId: task.planId,
     targetId: task.targetId,
-    // 前端独有字段（后端没有，设置默认值）
+    beginTime: todoTimeForInput(task.beginTime),
+    endTime: todoTimeForInput(task.endTime),
     category: '',
-    beginTime: undefined,
-    endTime: undefined,
     isContinuous: false,
     summury: undefined,
   };

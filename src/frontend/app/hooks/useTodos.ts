@@ -19,8 +19,23 @@ export function useTodos() {
     try {
       setLoading(true);
       const backendTodos = await todoApi.list(MOCK_USER_ID);
-      const frontendTodos = backendTodos.map(fromBackendTodo);
-      setTodos(frontendTodos);
+      const fromServer = backendTodos.map(fromBackendTodo);
+      // 合并本地独有字段，避免拉取覆盖分类/时间等
+      setTodos((prev) => {
+        const localById = new Map(prev.map((t) => [t.id, t]));
+        return fromServer.map((t) => {
+          const local = localById.get(t.id);
+          if (!local) return t;
+          return {
+            ...t,
+            category: local.category || t.category,
+            isContinuous: local.isContinuous ?? t.isContinuous,
+            summury: local.summury ?? t.summury,
+            beginTime: t.beginTime || local.beginTime,
+            endTime: t.endTime || local.endTime,
+          };
+        });
+      });
     } catch (error) {
       console.error('从后端同步待办失败:', error);
       // 失败时使用本地数据，不显示错误提示（可能是后端未启动）

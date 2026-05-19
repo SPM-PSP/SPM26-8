@@ -2,6 +2,8 @@ server:
   port: 8080 # 后端服务启动端口
 
 spring:
+  config:
+    import: optional:classpath:application-local.yml
   datasource:
     # 与本地 MySQL 一致；密码不对会报 Access denied for user 'root'@'localhost'
     # 推荐在 IDEA Run Configuration → Environment variables 中设置 MYSQL_PASSWORD，勿把真实密码提交到 Git
@@ -17,6 +19,24 @@ spring:
     init:
       mode: always
       encoding: UTF-8
+      # schema-migration 对已有库执行 ALTER；列已存在时会报错，由 continue-on-error 忽略
+      schema-locations: classpath:schema.sql,classpath:schema-migration.sql
+      continue-on-error: true
+
+# 邮件（QQ 推荐 465+SSL，见 application-local.example.yml）。未配置时演示模式：内容输出到控制台
+spring.mail:
+  host: ${MAIL_HOST:smtp.qq.com}
+  port: ${MAIL_PORT:465}
+  username: ${MAIL_USERNAME:}
+  password: ${MAIL_PASSWORD:}
+  properties:
+    mail.smtp.auth: true
+    mail.smtp.ssl.enable: ${MAIL_SSL_ENABLE:true}
+    mail.smtp.starttls.enable: ${MAIL_STARTTLS_ENABLE:false}
+
+ddl:
+  mail:
+    from: ${MAIL_FROM:${MAIL_USERNAME:}}
 
 mybatis-plus:
   configuration:
