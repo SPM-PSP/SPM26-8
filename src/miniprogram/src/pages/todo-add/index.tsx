@@ -174,9 +174,9 @@ export default function AddTodo() {
               <Text style={{ fontSize: '26rpx', fontWeight: 500, color: '#4a4a4a' }}>AI 智能解析（可选）</Text>
               <Text style={{ fontSize: '22rpx', color: '#8b8680' }}>{isAiConfigured() ? '已连接' : '演示模式'}</Text>
             </View>
-            <View style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16rpx', padding: '16rpx', backgroundColor: '#f5f1ed', marginBottom: '16rpx' }}>
-              <textarea
-                style={{ width: '100%', fontSize: '26rpx', color: '#4a4a4a', minHeight: '120rpx' }}
+            <View style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16rpx', padding: '20rpx', backgroundColor: '#f5f1ed', marginBottom: '16rpx' }}>
+              <input
+                style={{ width: '100%', fontSize: '26rpx', color: '#4a4a4a' }}
                 value={aiText}
                 onInput={(e) => setAiText(e.detail.value)}
                 placeholder="例如：明天下午三点前完成软件工程报告，比较重要..."
