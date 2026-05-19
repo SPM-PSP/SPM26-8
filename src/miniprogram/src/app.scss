@@ -60,5 +60,6 @@ page {
 $primary-color: $primary;
 $primary-color-end: $primary-light;
 
-@import '@nutui/nutui-react-taro/dist/styles/variables.scss';
-@import '@nutui/nutui-react-taro/dist/style.css';
+// NutUI CSS temporarily disabled — may interfere with WeChat native components
+// @import '@nutui/nutui-react-taro/dist/styles/variables.scss';
+// @import '@nutui/nutui-react-taro/dist/style.css';
