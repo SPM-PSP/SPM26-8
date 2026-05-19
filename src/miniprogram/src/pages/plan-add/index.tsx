@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { View, Text } from '@tarojs/components';
+import { View, Text, Picker as TaroPicker } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
-import { Picker, Dialog } from '@nutui/nutui-react-taro';
 import { PageHeader } from '../../components/PageHeader';
 import { usePlans } from '../../hooks/usePlans';
 import { useTargets } from '../../hooks/useTargets';
@@ -23,8 +22,6 @@ export default function AddPlan() {
   const [weight, setWeight] = useState(3);
   const [isRepeat, setIsRepeat] = useState(false);
   const [completed, setCompleted] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [targetPickerVisible, setTargetPickerVisible] = useState(false);
 
   useEffect(() => {
     if (isEdit && id) {
@@ -69,15 +66,22 @@ export default function AddPlan() {
   };
 
   const handleDelete = () => {
-    if (id) {
-      deletePlan(id);
-      Taro.showToast({ title: '计划已删除', icon: 'success' });
-      Taro.navigateBack();
-    }
+    if (!id) return;
+    Taro.showModal({
+      title: '确认删除',
+      content: '删除后将无法恢复，确定要删除这个计划吗？',
+      success: (res) => {
+        if (res.confirm) {
+          deletePlan(id);
+          Taro.showToast({ title: '计划已删除', icon: 'success' });
+          Taro.navigateBack();
+        }
+      },
+    });
   };
 
   const weightLabels = ['很低', '较低', '中等', '较高', '很高'];
-  const targetOptions = [[{ text: '无', value: '' }, ...targets.map(t => ({ text: t.title, value: t.id }))]];
+  const targetIndex = targetId ? targets.findIndex(t => t.id === targetId) + 1 : 0;
   const targetLabel = targetId ? targets.find(t => t.id === targetId)?.title || '目标' : '无';
 
   return (
@@ -86,7 +90,7 @@ export default function AddPlan() {
         title={isEdit ? '编辑计划' : '新增计划'}
         showBack
         rightElement={isEdit ? (
-          <Text style={{ color: '#d4726f', fontSize: '28rpx' }} onClick={() => setShowDeleteDialog(true)}>删除</Text>
+          <Text style={{ color: '#d4726f', fontSize: '28rpx' }} onClick={handleDelete}>删除</Text>
         ) : undefined}
       />
 
@@ -110,13 +114,16 @@ export default function AddPlan() {
 
           <View style={{ marginBottom: '28rpx' }}>
             <Text style={{ fontSize: '28rpx', color: '#4a4a4a', marginBottom: '16rpx', display: 'block' }}>所属目标</Text>
-            <View onClick={() => setTargetPickerVisible(true)} style={{
-              border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16rpx', padding: '20rpx',
-              backgroundColor: '#f5f1ed', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            }}>
-              <Text style={{ color: targetId ? '#4a4a4a' : '#ccc', fontSize: '28rpx' }}>{targetLabel}</Text>
-              <Text style={{ color: '#8b8680' }}>&#9662;</Text>
-            </View>
+            <TaroPicker mode='selector' range={['无', ...targets.map(t => t.title)]} value={targetIndex}
+              onChange={(e) => { const v = Number(e.detail.value); setTargetId(v === 0 ? '' : targets[v - 1].id); }}>
+              <View style={{
+                border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16rpx', padding: '20rpx',
+                backgroundColor: '#f5f1ed', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              }}>
+                <Text style={{ color: targetId ? '#4a4a4a' : '#ccc', fontSize: '28rpx' }}>{targetLabel}</Text>
+                <Text style={{ color: '#8b8680' }}>&#9662;</Text>
+              </View>
+            </TaroPicker>
           </View>
 
           <View style={{ display: 'flex', gap: '16rpx', marginBottom: '28rpx' }}>
@@ -207,17 +214,6 @@ export default function AddPlan() {
           <Text style={{ color: '#fff', fontSize: '30rpx', fontWeight: 500 }}>保存</Text>
         </View>
       </View>
-
-      {targetPickerVisible && (
-        <Picker visible title="选择目标" options={targetOptions as any}
-          value={[targetId]} onConfirm={(_, vals) => { setTargetId(String(vals[0] || '')); setTargetPickerVisible(false); }}
-          onClose={() => setTargetPickerVisible(false)} />
-      )}
-
-      {showDeleteDialog && (
-        <Dialog visible={showDeleteDialog} title="确认删除" content="删除后将无法恢复，确定要删除这个计划吗？"
-          onConfirm={handleDelete} onCancel={() => setShowDeleteDialog(false)} />
-      )}
     </View>
   );
 }

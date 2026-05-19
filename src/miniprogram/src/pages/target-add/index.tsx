@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
-import { Dialog } from '@nutui/nutui-react-taro';
+
 import { PageHeader } from '../../components/PageHeader';
 import { useTargets } from '../../hooks/useTargets';
 import { useTodos } from '../../hooks/useTodos';
@@ -26,7 +26,7 @@ export default function AddTarget() {
   const [endTime, setEndTime] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [weight, setWeight] = useState(3);
   const [completed, setCompleted] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
   const [wizardOpen, setWizardOpen] = useState(false);
   const [pendingSync, setPendingSync] = useState<TargetWizardResult | null>(null);
 
@@ -99,11 +99,18 @@ export default function AddTarget() {
   };
 
   const handleDelete = () => {
-    if (id) {
-      deleteTarget(id);
-      Taro.showToast({ title: '目标已删除', icon: 'success' });
-      Taro.navigateBack();
-    }
+    if (!id) return;
+    Taro.showModal({
+      title: '确认删除',
+      content: '删除后将无法恢复，确定要删除这个目标吗？',
+      success: (res) => {
+        if (res.confirm) {
+          deleteTarget(id);
+          Taro.showToast({ title: '目标已删除', icon: 'success' });
+          Taro.navigateBack();
+        }
+      },
+    });
   };
 
   const weightLabels = ['很低', '较低', '中等', '较高', '很高'];
@@ -114,7 +121,7 @@ export default function AddTarget() {
         title={isEdit ? '编辑目标' : '新增目标'}
         showBack
         rightElement={isEdit ? (
-          <Text style={{ color: '#d4726f', fontSize: '28rpx' }} onClick={() => setShowDeleteDialog(true)}>删除</Text>
+          <Text style={{ color: '#d4726f', fontSize: '28rpx' }} onClick={handleDelete}>删除</Text>
         ) : undefined}
       />
 
@@ -266,10 +273,6 @@ export default function AddTarget() {
         />
       )}
 
-      {showDeleteDialog && (
-        <Dialog visible={showDeleteDialog} title="确认删除" content="删除后将无法恢复，确定要删除这个目标吗？"
-          onConfirm={handleDelete} onCancel={() => setShowDeleteDialog(false)} />
-      )}
     </View>
   );
 }

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { View, Text } from '@tarojs/components';
+import { View, Text, Picker as TaroPicker } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
-import { Picker, Dialog } from '@nutui/nutui-react-taro';
 import { PageHeader } from '../../components/PageHeader';
 import { useTodos } from '../../hooks/useTodos';
 import { useTargets } from '../../hooks/useTargets';
@@ -38,16 +37,9 @@ export default function AddTodo() {
   const [isContinuous, setIsContinuous] = useState(false);
   const [summury, setSummury] = useState('');
   const [completed, setCompleted] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const [aiText, setAiText] = useState('');
   const [aiParsing, setAiParsing] = useState(false);
-
-  // Picker visibility states
-  const [levelPickerVisible, setLevelPickerVisible] = useState(false);
-  const [categoryPickerVisible, setCategoryPickerVisible] = useState(false);
-  const [targetPickerVisible, setTargetPickerVisible] = useState(false);
-  const [planPickerVisible, setPlanPickerVisible] = useState(false);
 
   useEffect(() => {
     if (isEdit && id) {
@@ -68,7 +60,6 @@ export default function AddTodo() {
       return;
     }
 
-    // Check for smart input draft from TodoList
     try {
       const raw = Taro.getStorageSync('smartInputDraft');
       if (raw) {
@@ -135,27 +126,34 @@ export default function AddTodo() {
   };
 
   const handleDelete = () => {
-    if (id) {
-      deleteTodo(id);
-      Taro.showToast({ title: '任务已删除', icon: 'success' });
-      Taro.navigateBack();
-    }
+    if (!id) return;
+    Taro.showModal({
+      title: '确认删除',
+      content: '删除后将无法恢复，确定要删除这个任务吗？',
+      success: (res) => {
+        if (res.confirm) {
+          deleteTodo(id);
+          Taro.showToast({ title: '任务已删除', icon: 'success' });
+          Taro.navigateBack();
+        }
+      },
+    });
   };
 
-  const levelOptions = [LEVELS.map(l => ({ text: l.label, value: l.value }))];
-  const categoryOptions = [[{ text: '未分类', value: '' }, ...CATEGORIES.map(c => ({ text: c, value: c }))]];
-  const targetOptions = [[{ text: '无', value: '' }, ...targets.map(t => ({ text: t.title, value: t.id }))]];
-  const planOptions = [[{ text: '无', value: '' }, ...plans.map(p => ({ text: p.title, value: p.id }))]];
+  const levelIndex = LEVELS.findIndex(l => l.value === level);
+  const categoryIndex = category ? CATEGORIES.indexOf(category) + 1 : 0;
+  const targetIndex = targetId ? targets.findIndex(t => t.id === targetId) + 1 : 0;
+  const planIndex = planId ? plans.findIndex(p => p.id === planId) + 1 : 0;
 
-  const levelLabel = LEVELS.find(l => l.value === level)?.label || '选择优先级';
+  const levelLabel = levelIndex >= 0 ? LEVELS[levelIndex].label : '选择优先级';
   const categoryLabel = category || '未分类';
   const targetLabel = targetId ? targets.find(t => t.id === targetId)?.title || '目标' : '无';
   const planLabel = planId ? plans.find(p => p.id === planId)?.title || '计划' : '无';
 
-  const pickerStyle = (label: string) => ({
+  const pickerContainer = {
     border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16rpx',
     padding: '20rpx', backgroundColor: '#f5f1ed', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-  });
+  };
 
   return (
     <View style={{ minHeight: '100vh', backgroundColor: '#f8f8f6', paddingBottom: '40rpx' }}>
@@ -163,7 +161,7 @@ export default function AddTodo() {
         title={isEdit ? '编辑任务' : '新增任务'}
         showBack
         rightElement={isEdit ? (
-          <Text style={{ color: '#d4726f', fontSize: '28rpx' }} onClick={() => setShowDeleteDialog(true)}>删除</Text>
+          <Text style={{ color: '#d4726f', fontSize: '28rpx' }} onClick={handleDelete}>删除</Text>
         ) : undefined}
       />
 
@@ -225,17 +223,23 @@ export default function AddTodo() {
         <View style={{ backgroundColor: '#fff', borderRadius: '24rpx', padding: '28rpx', marginBottom: '24rpx', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
           <View style={{ marginBottom: '28rpx' }}>
             <Text style={{ fontSize: '28rpx', color: '#4a4a4a', marginBottom: '16rpx', display: 'block' }}>优先级（四象限）</Text>
-            <View onClick={() => setLevelPickerVisible(true)} style={pickerStyle(levelLabel)}>
-              <Text style={{ color: '#4a4a4a', fontSize: '28rpx' }}>{levelLabel}</Text>
-              <Text style={{ color: '#8b8680' }}>&#9662;</Text>
-            </View>
+            <TaroPicker mode='selector' range={LEVELS.map(l => l.label)} value={levelIndex >= 0 ? levelIndex : 2}
+              onChange={(e) => setLevel(LEVELS[Number(e.detail.value)].value)}>
+              <View style={pickerContainer}>
+                <Text style={{ color: '#4a4a4a', fontSize: '28rpx' }}>{levelLabel}</Text>
+                <Text style={{ color: '#8b8680' }}>&#9662;</Text>
+              </View>
+            </TaroPicker>
           </View>
           <View>
             <Text style={{ fontSize: '28rpx', color: '#4a4a4a', marginBottom: '16rpx', display: 'block' }}>分类</Text>
-            <View onClick={() => setCategoryPickerVisible(true)} style={pickerStyle(categoryLabel)}>
-              <Text style={{ color: category ? '#4a4a4a' : '#ccc', fontSize: '28rpx' }}>{categoryLabel}</Text>
-              <Text style={{ color: '#8b8680' }}>&#9662;</Text>
-            </View>
+            <TaroPicker mode='selector' range={['未分类', ...CATEGORIES]} value={categoryIndex}
+              onChange={(e) => { const v = Number(e.detail.value); setCategory(v === 0 ? '' : CATEGORIES[v - 1]); }}>
+              <View style={pickerContainer}>
+                <Text style={{ color: category ? '#4a4a4a' : '#ccc', fontSize: '28rpx' }}>{categoryLabel}</Text>
+                <Text style={{ color: '#8b8680' }}>&#9662;</Text>
+              </View>
+            </TaroPicker>
           </View>
         </View>
 
@@ -262,18 +266,24 @@ export default function AddTodo() {
 
           <View style={{ marginBottom: '28rpx' }}>
             <Text style={{ fontSize: '28rpx', color: '#4a4a4a', marginBottom: '16rpx', display: 'block' }}>所属目标</Text>
-            <View onClick={() => setTargetPickerVisible(true)} style={pickerStyle(targetLabel)}>
-              <Text style={{ color: targetId ? '#4a4a4a' : '#ccc', fontSize: '28rpx' }}>{targetLabel}</Text>
-              <Text style={{ color: '#8b8680' }}>&#9662;</Text>
-            </View>
+            <TaroPicker mode='selector' range={['无', ...targets.map(t => t.title)]} value={targetIndex}
+              onChange={(e) => { const v = Number(e.detail.value); setTargetId(v === 0 ? '' : targets[v - 1].id); }}>
+              <View style={pickerContainer}>
+                <Text style={{ color: targetId ? '#4a4a4a' : '#ccc', fontSize: '28rpx' }}>{targetLabel}</Text>
+                <Text style={{ color: '#8b8680' }}>&#9662;</Text>
+              </View>
+            </TaroPicker>
           </View>
 
           <View style={{ marginBottom: '28rpx' }}>
             <Text style={{ fontSize: '28rpx', color: '#4a4a4a', marginBottom: '16rpx', display: 'block' }}>所属计划</Text>
-            <View onClick={() => setPlanPickerVisible(true)} style={pickerStyle(planLabel)}>
-              <Text style={{ color: planId ? '#4a4a4a' : '#ccc', fontSize: '28rpx' }}>{planLabel}</Text>
-              <Text style={{ color: '#8b8680' }}>&#9662;</Text>
-            </View>
+            <TaroPicker mode='selector' range={['无', ...plans.map(p => p.title)]} value={planIndex}
+              onChange={(e) => { const v = Number(e.detail.value); setPlanId(v === 0 ? '' : plans[v - 1].id); }}>
+              <View style={pickerContainer}>
+                <Text style={{ color: planId ? '#4a4a4a' : '#ccc', fontSize: '28rpx' }}>{planLabel}</Text>
+                <Text style={{ color: '#8b8680' }}>&#9662;</Text>
+              </View>
+            </TaroPicker>
           </View>
 
           <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '16rpx', borderTop: '1px solid #f0f0f0' }}>
@@ -281,7 +291,7 @@ export default function AddTodo() {
             <View
               onClick={() => setIsContinuous(!isContinuous)}
               style={{
-                width: '88rpx', height: '48rpx', borderRadius: '24rpx', transition: 'all 0.2s',
+                width: '88rpx', height: '48rpx', borderRadius: '24rpx',
                 backgroundColor: isContinuous ? '#88a096' : '#e0e0e0',
                 display: 'flex', alignItems: 'center', padding: '4rpx',
                 justifyContent: isContinuous ? 'flex-end' : 'flex-start',
@@ -330,33 +340,6 @@ export default function AddTodo() {
           <Text style={{ color: '#fff', fontSize: '30rpx', fontWeight: 500 }}>保存</Text>
         </View>
       </View>
-
-      {/* Pickers — only render when visible to avoid overlay blocking touches */}
-      {levelPickerVisible && (
-        <Picker visible title="选择优先级" options={levelOptions as any}
-          value={[level]} onConfirm={(_, vals) => { setLevel(vals[0] as Todo['level']); setLevelPickerVisible(false); }}
-          onClose={() => setLevelPickerVisible(false)} />
-      )}
-      {categoryPickerVisible && (
-        <Picker visible title="选择分类" options={categoryOptions as any}
-          value={[category]} onConfirm={(_, vals) => { setCategory(String(vals[0] || '')); setCategoryPickerVisible(false); }}
-          onClose={() => setCategoryPickerVisible(false)} />
-      )}
-      {targetPickerVisible && (
-        <Picker visible title="选择目标" options={targetOptions as any}
-          value={[targetId]} onConfirm={(_, vals) => { setTargetId(String(vals[0] || '')); setTargetPickerVisible(false); }}
-          onClose={() => setTargetPickerVisible(false)} />
-      )}
-      {planPickerVisible && (
-        <Picker visible title="选择计划" options={planOptions as any}
-          value={[planId]} onConfirm={(_, vals) => { setPlanId(String(vals[0] || '')); setPlanPickerVisible(false); }}
-          onClose={() => setPlanPickerVisible(false)} />
-      )}
-
-      {showDeleteDialog && (
-        <Dialog visible={showDeleteDialog} title="确认删除" content="删除后将无法恢复，确定要删除这个任务吗？"
-          onConfirm={handleDelete} onCancel={() => setShowDeleteDialog(false)} />
-      )}
     </View>
   );
 }
