@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Picker as TaroPicker } from '@tarojs/components';
+import { View, Text, Picker as TaroPicker, Input } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { PageHeader } from '../../components/PageHeader';
 import { useNotes } from '../../hooks/useNotes';
@@ -112,7 +112,7 @@ export default function AddNote() {
               border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16rpx',
               padding: '20rpx', backgroundColor: '#f5f1ed',
             }}>
-              <input
+              <Input
                 style={{ width: '100%', fontSize: '28rpx', color: '#4a4a4a' }}
                 value={title}
                 onInput={(e) => setTitle(e.detail.value)}
@@ -130,7 +130,7 @@ export default function AddNote() {
               border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16rpx',
               padding: '20rpx', backgroundColor: '#f5f1ed',
             }}>
-              <input
+              <Input
                 style={{ width: '100%', fontSize: '28rpx', color: '#4a4a4a' }}
                 value={content}
                 onInput={(e) => setContent(e.detail.value)}

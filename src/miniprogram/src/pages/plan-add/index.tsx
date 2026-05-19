@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Picker as TaroPicker } from '@tarojs/components';
+import { View, Text, Picker as TaroPicker, Input } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { PageHeader } from '../../components/PageHeader';
 import { usePlans } from '../../hooks/usePlans';
@@ -99,7 +99,7 @@ export default function AddPlan() {
           <View style={{ marginBottom: '28rpx' }}>
             <Text style={{ fontSize: '28rpx', color: '#4a4a4a', marginBottom: '16rpx', display: 'block' }}>计划标题 *</Text>
             <View style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16rpx', padding: '20rpx', backgroundColor: '#f5f1ed' }}>
-              <input style={{ width: '100%', fontSize: '28rpx', color: '#4a4a4a' }}
+              <Input style={{ width: '100%', fontSize: '28rpx', color: '#4a4a4a' }}
                 value={title} onInput={(e) => setTitle(e.detail.value)} placeholder="输入计划标题" placeholderStyle="color: #ccc" />
             </View>
           </View>
@@ -107,7 +107,7 @@ export default function AddPlan() {
           <View style={{ marginBottom: '28rpx' }}>
             <Text style={{ fontSize: '28rpx', color: '#4a4a4a', marginBottom: '16rpx', display: 'block' }}>计划描述</Text>
             <View style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16rpx', padding: '20rpx', backgroundColor: '#f5f1ed' }}>
-              <input style={{ width: '100%', fontSize: '28rpx', color: '#4a4a4a' }}
+              <Input style={{ width: '100%', fontSize: '28rpx', color: '#4a4a4a' }}
                 value={desc} onInput={(e) => setDesc(e.detail.value)} placeholder="描述你的计划..." placeholderStyle="color: #ccc; font-size: 28rpx" />
             </View>
           </View>
@@ -130,14 +130,14 @@ export default function AddPlan() {
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: '28rpx', color: '#4a4a4a', marginBottom: '16rpx', display: 'block' }}>开始时间</Text>
               <View style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16rpx', padding: '20rpx', backgroundColor: '#f5f1ed' }}>
-                <input style={{ width: '100%', fontSize: '26rpx', color: '#4a4a4a' }}
+                <Input style={{ width: '100%', fontSize: '26rpx', color: '#4a4a4a' }}
                   value={beginTime} onInput={(e) => setBeginTime(e.detail.value)} placeholder="yyyy-MM-dd" placeholderStyle="color: #ccc" />
               </View>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: '28rpx', color: '#4a4a4a', marginBottom: '16rpx', display: 'block' }}>结束时间</Text>
               <View style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16rpx', padding: '20rpx', backgroundColor: '#f5f1ed' }}>
-                <input style={{ width: '100%', fontSize: '26rpx', color: '#4a4a4a' }}
+                <Input style={{ width: '100%', fontSize: '26rpx', color: '#4a4a4a' }}
                   value={endTime} onInput={(e) => setEndTime(e.detail.value)} placeholder="yyyy-MM-dd" placeholderStyle="color: #ccc" />
               </View>
             </View>

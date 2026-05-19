@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text } from '@tarojs/components';
+import { View, Text, Input } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { STATUS_BAR_HEIGHT } from '../../utils/safeArea';
 import { Switch } from '@nutui/nutui-react-taro';
@@ -132,7 +132,7 @@ export default function Me() {
             <Text style={{ fontSize: '26rpx', color: '#4a4a4a', marginBottom: '12rpx', display: 'block' }}>绑定邮箱</Text>
             <View style={{ display: 'flex', gap: '12rpx' }}>
               <View style={{ flex: 1, border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16rpx', padding: '16rpx 20rpx', backgroundColor: '#f5f1ed' }}>
-                <input style={{ width: '100%', fontSize: '26rpx', color: '#4a4a4a' }}
+                <Input style={{ width: '100%', fontSize: '26rpx', color: '#4a4a4a' }}
                   value={emailInput} onInput={(e) => setEmailInput(e.detail.value)}
                   placeholder="your@email.com" placeholderStyle="color: #ccc" disabled={profileLoading} />
               </View>
