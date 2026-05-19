@@ -8,6 +8,7 @@ import { usePlans } from '../../hooks/usePlans';
 import { Todo } from '../../types';
 import { isAiConfigured, parseTodoFromText, ParsedTodoDraft } from '../../services/ai';
 import { todoTimeForInput } from '../../utils/typeMapper';
+import { format } from 'date-fns';
 
 const CATEGORIES = ['工作', '学习', '生活', '健康', '娱乐', '其他'];
 const LEVELS: { value: Todo['level']; label: string }[] = [
@@ -155,6 +156,8 @@ export default function AddTodo() {
     padding: '20rpx', backgroundColor: '#f5f1ed', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
   };
 
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+
   return (
     <View style={{ minHeight: '100vh', backgroundColor: '#f8f8f6', paddingBottom: '40rpx' }}>
       <PageHeader
@@ -255,31 +258,100 @@ export default function AddTodo() {
 
         {/* 时间、关联 */}
         <View style={{ backgroundColor: '#fff', borderRadius: '24rpx', padding: '28rpx', marginBottom: '24rpx', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
-          <View style={{ display: 'flex', gap: '16rpx', marginBottom: '28rpx' }}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: '28rpx', color: '#4a4a4a', marginBottom: '16rpx', display: 'block' }}>开始时间</Text>
-              <View style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16rpx', padding: '20rpx', backgroundColor: '#f5f1ed' }}>
-                <Input
-                  style={{ width: '100%', fontSize: '26rpx', color: '#4a4a4a' }}
-                  value={beginTime}
-                  onInput={(e) => setBeginTime(e.detail.value)}
-                  placeholder="可选"
-                  placeholderStyle="color: #ccc"
-                />
+          {/* 开始时间 */}
+          <View style={{ marginBottom: '24rpx' }}>
+            <Text style={{ fontSize: '28rpx', color: '#4a4a4a', marginBottom: '16rpx', display: 'block' }}>开始时间</Text>
+            <View style={{ display: 'flex', gap: '16rpx' }}>
+              <View style={{ flex: 1 }}>
+                <TaroPicker
+                  mode="date"
+                  value={beginTime ? beginTime.split(' ')[0] : todayStr}
+                  onChange={(e) => {
+                    const date = e.detail.value as string;
+                    const timePart = beginTime ? beginTime.split(' ')[1] : '';
+                    setBeginTime(timePart ? `${date} ${timePart}` : date);
+                  }}
+                >
+                  <View style={pickerContainer}>
+                    <Text style={{ color: beginTime ? '#4a4a4a' : '#ccc', fontSize: '26rpx' }}>
+                      {beginTime ? beginTime.split(' ')[0] : '选择日期'}
+                    </Text>
+                    <Text style={{ color: '#8b8680' }}>&#9662;</Text>
+                  </View>
+                </TaroPicker>
+              </View>
+              <View style={{ flex: 1 }}>
+                <TaroPicker
+                  mode="time"
+                  value={beginTime && beginTime.includes(' ') ? beginTime.split(' ')[1] : '00:00'}
+                  onChange={(e) => {
+                    const time = e.detail.value as string;
+                    const datePart = beginTime ? beginTime.split(' ')[0] : todayStr;
+                    setBeginTime(`${datePart} ${time}`);
+                  }}
+                >
+                  <View style={pickerContainer}>
+                    <Text style={{ color: beginTime && beginTime.includes(' ') ? '#4a4a4a' : '#ccc', fontSize: '26rpx' }}>
+                      {beginTime && beginTime.includes(' ') ? beginTime.split(' ')[1] : '选择时间'}
+                    </Text>
+                    <Text style={{ color: '#8b8680' }}>&#9662;</Text>
+                  </View>
+                </TaroPicker>
               </View>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: '28rpx', color: '#4a4a4a', marginBottom: '16rpx', display: 'block' }}>结束时间</Text>
-              <View style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16rpx', padding: '20rpx', backgroundColor: '#f5f1ed' }}>
-                <Input
-                  style={{ width: '100%', fontSize: '26rpx', color: '#4a4a4a' }}
-                  value={endTime}
-                  onInput={(e) => setEndTime(e.detail.value)}
-                  placeholder="可选"
-                  placeholderStyle="color: #ccc"
-                />
+            {beginTime ? (
+              <Text style={{ fontSize: '22rpx', color: '#d4726f', marginTop: '8rpx', display: 'block' }}>
+                已选：{beginTime.replace(' ', '  ')}
+              </Text>
+            ) : null}
+          </View>
+
+          {/* 结束时间 */}
+          <View style={{ marginBottom: '28rpx' }}>
+            <Text style={{ fontSize: '28rpx', color: '#4a4a4a', marginBottom: '16rpx', display: 'block' }}>结束时间</Text>
+            <View style={{ display: 'flex', gap: '16rpx' }}>
+              <View style={{ flex: 1 }}>
+                <TaroPicker
+                  mode="date"
+                  value={endTime ? endTime.split(' ')[0] : todayStr}
+                  onChange={(e) => {
+                    const date = e.detail.value as string;
+                    const timePart = endTime ? endTime.split(' ')[1] : '';
+                    setEndTime(timePart ? `${date} ${timePart}` : date);
+                  }}
+                >
+                  <View style={pickerContainer}>
+                    <Text style={{ color: endTime ? '#4a4a4a' : '#ccc', fontSize: '26rpx' }}>
+                      {endTime ? endTime.split(' ')[0] : '选择日期'}
+                    </Text>
+                    <Text style={{ color: '#8b8680' }}>&#9662;</Text>
+                  </View>
+                </TaroPicker>
+              </View>
+              <View style={{ flex: 1 }}>
+                <TaroPicker
+                  mode="time"
+                  value={endTime && endTime.includes(' ') ? endTime.split(' ')[1] : '00:00'}
+                  onChange={(e) => {
+                    const time = e.detail.value as string;
+                    const datePart = endTime ? endTime.split(' ')[0] : todayStr;
+                    setEndTime(`${datePart} ${time}`);
+                  }}
+                >
+                  <View style={pickerContainer}>
+                    <Text style={{ color: endTime && endTime.includes(' ') ? '#4a4a4a' : '#ccc', fontSize: '26rpx' }}>
+                      {endTime && endTime.includes(' ') ? endTime.split(' ')[1] : '选择时间'}
+                    </Text>
+                    <Text style={{ color: '#8b8680' }}>&#9662;</Text>
+                  </View>
+                </TaroPicker>
               </View>
             </View>
+            {endTime ? (
+              <Text style={{ fontSize: '22rpx', color: '#d4726f', marginTop: '8rpx', display: 'block' }}>
+                已选：{endTime.replace(' ', '  ')}
+              </Text>
+            ) : null}
           </View>
 
           <View style={{ marginBottom: '28rpx' }}>
