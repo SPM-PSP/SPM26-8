@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, Input } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 
@@ -30,8 +30,11 @@ export default function AddTarget() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [pendingSync, setPendingSync] = useState<TargetWizardResult | null>(null);
 
+  const formLoaded = useRef(false);
+
   useEffect(() => {
     if (isEdit && id) {
+      if (formLoaded.current) return;
       const target = getTarget(id);
       if (target) {
         setTitle(target.title);
@@ -40,6 +43,7 @@ export default function AddTarget() {
         setEndTime(target.endTime);
         setWeight(target.weight);
         setCompleted(target.completed);
+        formLoaded.current = true;
       }
     }
   }, [id, isEdit, getTarget]);
@@ -70,7 +74,7 @@ export default function AddTarget() {
     const payload = { title, desc, beginTime, endTime, weight, completed };
 
     if (isEdit && id) {
-      updateTarget(id, payload);
+      await updateTarget(id, payload);
       Taro.showToast({ title: '保存成功', icon: 'success' });
       Taro.navigateBack();
       return;

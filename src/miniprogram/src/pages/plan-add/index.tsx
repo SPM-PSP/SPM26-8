@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, Picker as TaroPicker, Input } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { PageHeader } from '../../components/PageHeader';
@@ -23,8 +23,11 @@ export default function AddPlan() {
   const [isRepeat, setIsRepeat] = useState(false);
   const [completed, setCompleted] = useState(false);
 
+  const formLoaded = useRef(false);
+
   useEffect(() => {
     if (isEdit && id) {
+      if (formLoaded.current) return;
       const plan = getPlan(id);
       if (plan) {
         setTitle(plan.title);
@@ -35,11 +38,12 @@ export default function AddPlan() {
         setWeight(plan.weight);
         setIsRepeat(plan.isRepeat);
         setCompleted(plan.completed);
+        formLoaded.current = true;
       }
     }
   }, [id, isEdit, getPlan]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title.trim()) {
       Taro.showToast({ title: '请输入计划标题', icon: 'none' });
       return;
@@ -56,10 +60,10 @@ export default function AddPlan() {
     };
 
     if (isEdit && id) {
-      updatePlan(id, planData);
+      await updatePlan(id, planData);
       Taro.showToast({ title: '保存成功', icon: 'success' });
     } else {
-      addPlan(planData);
+      await addPlan(planData);
       Taro.showToast({ title: '计划创建成功', icon: 'success' });
     }
     Taro.navigateBack();

@@ -20,19 +20,20 @@ export function useTodos() {
       const backendTodos = await todoApi.list(MOCK_USER_ID);
       const fromServer = backendTodos.map(fromBackendTodo);
       setTodos((prev) => {
+        const serverIds = new Set(fromServer.map((t) => t.id));
         const localById = new Map(prev.map((t) => [t.id, t]));
-        return fromServer.map((t) => {
+        const merged = fromServer.map((t) => {
           const local = localById.get(t.id);
           if (!local) return t;
-          return {
-            ...t,
-            category: local.category || t.category,
-            isContinuous: local.isContinuous ?? t.isContinuous,
-            summury: local.summury ?? t.summury,
-            beginTime: t.beginTime || local.beginTime,
-            endTime: t.endTime || local.endTime,
-          };
+          return { ...t, ...local };
         });
+        // Preserve local-only items that haven't been synced to server yet
+        for (const item of prev) {
+          if (!serverIds.has(item.id)) {
+            merged.push(item);
+          }
+        }
+        return merged;
       });
     } catch (error) {
       console.error('从后端同步待办失败:', error);

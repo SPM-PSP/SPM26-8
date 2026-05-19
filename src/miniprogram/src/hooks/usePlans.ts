@@ -18,8 +18,20 @@ export function usePlans() {
     try {
       setLoading(true);
       const backendPlans = await planApi.restore(MOCK_USER_ID);
-      const frontendPlans = backendPlans.map(fromBackendPlan);
-      setPlans(frontendPlans);
+      const fromServer = backendPlans.map(fromBackendPlan);
+      setPlans((prev) => {
+        const serverIds = new Set(fromServer.map((p) => p.id));
+        const localById = new Map(prev.map((p) => [p.id, p]));
+        const merged = fromServer.map((p) => {
+          const local = localById.get(p.id);
+          if (!local) return p;
+          return { ...p, ...local };
+        });
+        for (const item of prev) {
+          if (!serverIds.has(item.id)) merged.push(item);
+        }
+        return merged;
+      });
     } catch (error) {
       console.error('从后端同步计划失败:', error);
     } finally {

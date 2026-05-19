@@ -3,11 +3,19 @@
 import Taro from '@tarojs/taro';
 import { Result } from '../types/backend';
 
-const BASE_URL = 'http://localhost:8080/api';
+const BASE_URL = 'http://127.0.0.1:8080/api';
 const TIMEOUT = 10000;
 
 interface RequestOptions {
   params?: Record<string, string>;
+}
+
+function buildQuery(params: Record<string, string>): string {
+  const parts: string[] = [];
+  for (const key of Object.keys(params)) {
+    parts.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
+  }
+  return parts.join('&');
 }
 
 async function request<T>(
@@ -17,15 +25,20 @@ async function request<T>(
   options?: RequestOptions
 ): Promise<T> {
   const url = `${BASE_URL}${path}`;
+  const body = data !== undefined ? JSON.stringify(data) : undefined;
+
+  console.log(`[API] ${method} ${url}`, body ? `body=${body.slice(0, 200)}` : '');
 
   try {
     const res = await Taro.request({
       url,
       method,
-      data,
+      data: body,
       header: { 'Content-Type': 'application/json' },
       timeout: TIMEOUT,
     });
+
+    console.log(`[API] 响应 ${res.statusCode}`, JSON.stringify(res.data).slice(0, 200));
 
     if (res.statusCode === 200) {
       const result: Result<T> = res.data as Result<T>;
@@ -49,7 +62,7 @@ async function request<T>(
     throw new Error(msg);
   } catch (e: unknown) {
     if (e instanceof Error && e.message && !e.message.startsWith('请求')) {
-      // Network error from Taro.request itself
+      console.error('[API] 网络错误:', e.message);
       Taro.showToast({ title: '网络错误，请检查后端服务是否启动', icon: 'none' });
     }
     throw e;
@@ -59,14 +72,14 @@ async function request<T>(
 export const apiClient = {
   get<T>(path: string, options?: RequestOptions): Promise<T> {
     const url = options?.params
-      ? `${path}?${new URLSearchParams(options.params).toString()}`
+      ? `${path}?${buildQuery(options.params)}`
       : path;
     return request<T>('GET', url);
   },
 
   post<T>(path: string, data?: unknown, options?: RequestOptions): Promise<T> {
     const url = options?.params
-      ? `${path}?${new URLSearchParams(options.params).toString()}`
+      ? `${path}?${buildQuery(options.params)}`
       : path;
     return request<T>('POST', url, data);
   },

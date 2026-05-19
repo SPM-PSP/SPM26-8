@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, Picker as TaroPicker, Input } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { PageHeader } from '../../components/PageHeader';
@@ -41,8 +41,11 @@ export default function AddTodo() {
   const [aiText, setAiText] = useState('');
   const [aiParsing, setAiParsing] = useState(false);
 
+  const formLoaded = useRef(false);
+
   useEffect(() => {
     if (isEdit && id) {
+      if (formLoaded.current) return;
       const todo = getTodo(id);
       if (todo) {
         setTitle(todo.title);
@@ -56,6 +59,7 @@ export default function AddTodo() {
         setIsContinuous(todo.isContinuous);
         setSummury(todo.summury || '');
         setCompleted(todo.completed);
+        formLoaded.current = true;
       }
       return;
     }
@@ -95,7 +99,7 @@ export default function AddTodo() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title.trim()) {
       Taro.showToast({ title: '请输入任务标题', icon: 'none' });
       return;
@@ -116,11 +120,9 @@ export default function AddTodo() {
     };
 
     if (isEdit && id) {
-      updateTodo(id, todoData);
-      Taro.showToast({ title: '保存成功', icon: 'success' });
+      await updateTodo(id, todoData);
     } else {
-      addTodo(todoData);
-      Taro.showToast({ title: '任务创建成功', icon: 'success' });
+      await addTodo(todoData);
     }
     Taro.navigateBack();
   };

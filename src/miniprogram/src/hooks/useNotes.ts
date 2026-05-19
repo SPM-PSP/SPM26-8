@@ -18,8 +18,20 @@ export function useNotes() {
     try {
       setLoading(true);
       const backendNotes = await noteApi.restore(MOCK_USER_ID);
-      const frontendNotes = backendNotes.map(fromBackendNote);
-      setNotes(frontendNotes);
+      const fromServer = backendNotes.map(fromBackendNote);
+      setNotes((prev) => {
+        const serverIds = new Set(fromServer.map((n) => n.id));
+        const localById = new Map(prev.map((n) => [n.id, n]));
+        const merged = fromServer.map((n) => {
+          const local = localById.get(n.id);
+          if (!local) return n;
+          return { ...n, ...local };
+        });
+        for (const item of prev) {
+          if (!serverIds.has(item.id)) merged.push(item);
+        }
+        return merged;
+      });
     } catch (error) {
       console.error('从后端同步笔记失败:', error);
     } finally {

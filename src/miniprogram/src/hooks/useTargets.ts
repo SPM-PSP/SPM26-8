@@ -18,8 +18,20 @@ export function useTargets() {
     try {
       setLoading(true);
       const backendTargets = await targetApi.restore(MOCK_USER_ID);
-      const frontendTargets = backendTargets.map(fromBackendTarget);
-      setTargets(frontendTargets);
+      const fromServer = backendTargets.map(fromBackendTarget);
+      setTargets((prev) => {
+        const serverIds = new Set(fromServer.map((t) => t.id));
+        const localById = new Map(prev.map((t) => [t.id, t]));
+        const merged = fromServer.map((t) => {
+          const local = localById.get(t.id);
+          if (!local) return t;
+          return { ...t, ...local };
+        });
+        for (const item of prev) {
+          if (!serverIds.has(item.id)) merged.push(item);
+        }
+        return merged;
+      });
     } catch (error) {
       console.error('从后端同步目标失败:', error);
     } finally {

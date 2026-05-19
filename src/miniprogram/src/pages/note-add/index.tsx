@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, Picker as TaroPicker, Input } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { PageHeader } from '../../components/PageHeader';
@@ -20,19 +20,23 @@ export default function AddNote() {
   const [targetId, setTargetId] = useState<string>('');
   const [planId, setPlanId] = useState<string>('');
 
+  const formLoaded = useRef(false);
+
   useEffect(() => {
     if (isEdit && id) {
+      if (formLoaded.current) return;
       const note = getNote(id);
       if (note) {
         setTitle(note.title);
         setContent(note.content);
         setTargetId(note.targetId || '');
         setPlanId(note.planId || '');
+        formLoaded.current = true;
       }
     }
   }, [id, isEdit, getNote]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title.trim()) {
       Taro.showToast({ title: '请输入笔记标题', icon: 'none' });
       return;
@@ -50,10 +54,10 @@ export default function AddNote() {
     };
 
     if (isEdit && id) {
-      updateNote(id, noteData);
+      await updateNote(id, noteData);
       Taro.showToast({ title: '保存成功', icon: 'success' });
     } else {
-      addNote(noteData);
+      await addNote(noteData);
       Taro.showToast({ title: '笔记创建成功', icon: 'success' });
     }
     Taro.navigateBack();
