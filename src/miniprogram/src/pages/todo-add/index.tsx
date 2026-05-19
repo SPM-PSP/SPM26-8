@@ -8,7 +8,6 @@ import { usePlans } from '../../hooks/usePlans';
 import { Todo } from '../../types';
 import { isAiConfigured, parseTodoFromText, ParsedTodoDraft } from '../../services/ai';
 import { todoTimeForInput } from '../../utils/typeMapper';
-import { format } from 'date-fns';
 
 const CATEGORIES = ['工作', '学习', '生活', '健康', '娱乐', '其他'];
 const LEVELS: { value: Todo['level']; label: string }[] = [
@@ -156,7 +155,13 @@ export default function AddTodo() {
     padding: '20rpx', backgroundColor: '#f5f1ed', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
   };
 
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const todayStr = (() => { const d = new Date(); return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); })();
+
+  const dtSep = (dt: string) => dt.includes('T') ? 'T' : dt.includes(' ') ? ' ' : '';
+  const dtDate = (dt: string) => dt ? dt.split(/[T ]/)[0] : '';
+  const dtTime = (dt: string) => { const p = dt.split(/[T ]/); return p.length > 1 ? p[1].slice(0, 5) : ''; };
+  const dtJoin = (date: string, time: string) => time ? `${date}T${time}` : date;
+  const dtDisplay = (dt: string) => dt ? dt.replace(/[T ]/, '  ') : '';
 
   return (
     <View style={{ minHeight: '100vh', backgroundColor: '#f8f8f6', paddingBottom: '40rpx' }}>
@@ -265,16 +270,12 @@ export default function AddTodo() {
               <View style={{ flex: 1 }}>
                 <TaroPicker
                   mode="date"
-                  value={beginTime ? beginTime.split(' ')[0] : todayStr}
-                  onChange={(e) => {
-                    const date = e.detail.value as string;
-                    const timePart = beginTime ? beginTime.split(' ')[1] : '';
-                    setBeginTime(timePart ? `${date} ${timePart}` : date);
-                  }}
+                  value={dtDate(beginTime) || todayStr}
+                  onChange={(e) => setBeginTime(dtJoin(e.detail.value as string, dtTime(beginTime)))}
                 >
                   <View style={pickerContainer}>
                     <Text style={{ color: beginTime ? '#4a4a4a' : '#ccc', fontSize: '26rpx' }}>
-                      {beginTime ? beginTime.split(' ')[0] : '选择日期'}
+                      {dtDate(beginTime) || '选择日期'}
                     </Text>
                     <Text style={{ color: '#8b8680' }}>&#9662;</Text>
                   </View>
@@ -283,16 +284,12 @@ export default function AddTodo() {
               <View style={{ flex: 1 }}>
                 <TaroPicker
                   mode="time"
-                  value={beginTime && beginTime.includes(' ') ? beginTime.split(' ')[1] : '00:00'}
-                  onChange={(e) => {
-                    const time = e.detail.value as string;
-                    const datePart = beginTime ? beginTime.split(' ')[0] : todayStr;
-                    setBeginTime(`${datePart} ${time}`);
-                  }}
+                  value={dtTime(beginTime) || '00:00'}
+                  onChange={(e) => setBeginTime(dtJoin(dtDate(beginTime) || todayStr, e.detail.value as string))}
                 >
                   <View style={pickerContainer}>
-                    <Text style={{ color: beginTime && beginTime.includes(' ') ? '#4a4a4a' : '#ccc', fontSize: '26rpx' }}>
-                      {beginTime && beginTime.includes(' ') ? beginTime.split(' ')[1] : '选择时间'}
+                    <Text style={{ color: dtTime(beginTime) ? '#4a4a4a' : '#ccc', fontSize: '26rpx' }}>
+                      {dtTime(beginTime) || '选择时间'}
                     </Text>
                     <Text style={{ color: '#8b8680' }}>&#9662;</Text>
                   </View>
@@ -301,7 +298,7 @@ export default function AddTodo() {
             </View>
             {beginTime ? (
               <Text style={{ fontSize: '22rpx', color: '#d4726f', marginTop: '8rpx', display: 'block' }}>
-                已选：{beginTime.replace(' ', '  ')}
+                已选：{dtDisplay(beginTime)}
               </Text>
             ) : null}
           </View>
@@ -313,16 +310,12 @@ export default function AddTodo() {
               <View style={{ flex: 1 }}>
                 <TaroPicker
                   mode="date"
-                  value={endTime ? endTime.split(' ')[0] : todayStr}
-                  onChange={(e) => {
-                    const date = e.detail.value as string;
-                    const timePart = endTime ? endTime.split(' ')[1] : '';
-                    setEndTime(timePart ? `${date} ${timePart}` : date);
-                  }}
+                  value={dtDate(endTime) || todayStr}
+                  onChange={(e) => setEndTime(dtJoin(e.detail.value as string, dtTime(endTime)))}
                 >
                   <View style={pickerContainer}>
                     <Text style={{ color: endTime ? '#4a4a4a' : '#ccc', fontSize: '26rpx' }}>
-                      {endTime ? endTime.split(' ')[0] : '选择日期'}
+                      {dtDate(endTime) || '选择日期'}
                     </Text>
                     <Text style={{ color: '#8b8680' }}>&#9662;</Text>
                   </View>
@@ -331,16 +324,12 @@ export default function AddTodo() {
               <View style={{ flex: 1 }}>
                 <TaroPicker
                   mode="time"
-                  value={endTime && endTime.includes(' ') ? endTime.split(' ')[1] : '00:00'}
-                  onChange={(e) => {
-                    const time = e.detail.value as string;
-                    const datePart = endTime ? endTime.split(' ')[0] : todayStr;
-                    setEndTime(`${datePart} ${time}`);
-                  }}
+                  value={dtTime(endTime) || '00:00'}
+                  onChange={(e) => setEndTime(dtJoin(dtDate(endTime) || todayStr, e.detail.value as string))}
                 >
                   <View style={pickerContainer}>
-                    <Text style={{ color: endTime && endTime.includes(' ') ? '#4a4a4a' : '#ccc', fontSize: '26rpx' }}>
-                      {endTime && endTime.includes(' ') ? endTime.split(' ')[1] : '选择时间'}
+                    <Text style={{ color: dtTime(endTime) ? '#4a4a4a' : '#ccc', fontSize: '26rpx' }}>
+                      {dtTime(endTime) || '选择时间'}
                     </Text>
                     <Text style={{ color: '#8b8680' }}>&#9662;</Text>
                   </View>
@@ -349,7 +338,7 @@ export default function AddTodo() {
             </View>
             {endTime ? (
               <Text style={{ fontSize: '22rpx', color: '#d4726f', marginTop: '8rpx', display: 'block' }}>
-                已选：{endTime.replace(' ', '  ')}
+                已选：{dtDisplay(endTime)}
               </Text>
             ) : null}
           </View>
