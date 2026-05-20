@@ -100,9 +100,17 @@ export default function TodoList() {
 
   return (
     <View style={{ minHeight: '100vh', backgroundColor: '#f8f8f6', paddingBottom: '120rpx' }}>
+      {/* 系统状态栏背景填充 */}
+      <View style={{
+        position: 'fixed', top: 0, left: 0, right: 0,
+        height: `${STATUS_BAR_HEIGHT}px`,
+        backgroundColor: 'rgba(255,255,255,0.95)',
+        zIndex: 101,
+      }} />
+
       {/* 顶部栏 */}
       <View style={{
-        position: 'sticky', top: 0, zIndex: 50,
+        position: 'sticky', top: 0, zIndex: 100,
         backgroundColor: 'rgba(255,255,255,0.95)',
         boxShadow: '0 2px 16px rgba(0,0,0,0.04)',
         padding: `${STATUS_BAR_HEIGHT + 12}px 36rpx 24rpx 36rpx`,
@@ -251,27 +259,29 @@ export default function TodoList() {
                         </Text>
                       ) : null}
 
-                      {/* 已逾期 — 单独一行 */}
-                      {overdueTask && (
-                        <Text style={{ fontSize: '24rpx', color: '#d4726f', fontWeight: 600, marginBottom: '6rpx', display: 'block' }}>
-                          ⚠ 已逾期
-                        </Text>
-                      )}
-
-                      {/* 日期 — 单独一行 */}
-                      {todo.endTime && (
-                        <View style={{ display: 'flex', alignItems: 'center', gap: '8rpx', marginBottom: '6rpx' }}>
-                          <Text style={{ fontSize: '22rpx', color: overdueTask ? '#d4726f' : '#8b8680' }}>
-                            {format(new Date(todo.endTime), 'MM/dd HH:mm', { locale: zhCN })}
-                          </Text>
-                          {urgentTask && (
-                            <Text style={{
-                              fontSize: '20rpx', fontFamily: 'monospace',
-                              backgroundColor: '#fef0ef', color: '#d4726f',
-                              padding: '4rpx 12rpx', borderRadius: '8rpx',
-                            }}>
-                              {getCountdown(todo.endTime)}
+                      {/* 已逾期 + 日期 — 同一行 */}
+                      {(overdueTask || todo.endTime) && (
+                        <View style={{ display: 'flex', alignItems: 'center', gap: '8rpx', flexWrap: 'wrap', marginBottom: '6rpx' }}>
+                          {overdueTask && (
+                            <Text style={{ fontSize: '24rpx', color: '#d4726f', fontWeight: 600 }}>
+                              ⚠ 已逾期
                             </Text>
+                          )}
+                          {todo.endTime && (
+                            <>
+                              <Text style={{ fontSize: '22rpx', color: overdueTask ? '#d4726f' : '#8b8680' }}>
+                                {format(new Date(todo.endTime), 'MM/dd HH:mm', { locale: zhCN })}
+                              </Text>
+                              {urgentTask && (
+                                <Text style={{
+                                  fontSize: '20rpx', fontFamily: 'monospace',
+                                  backgroundColor: '#fef0ef', color: '#d4726f',
+                                  padding: '4rpx 12rpx', borderRadius: '8rpx',
+                                }}>
+                                  {getCountdown(todo.endTime)}
+                                </Text>
+                              )}
+                            </>
                           )}
                         </View>
                       )}
