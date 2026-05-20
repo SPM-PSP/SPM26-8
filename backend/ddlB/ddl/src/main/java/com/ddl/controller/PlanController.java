@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 计划模块控制器 (PlanController)
+ * 计划模块控制器
  * 负责处理与“计划(Plan)”相关的前端 HTTP 请求，例如计划数据的云端备份与恢复。
  */
 @RestController // 标识这是一个 REST 风格的控制器，所有方法的返回值都会自动序列化为 JSON 格式返回给前端
