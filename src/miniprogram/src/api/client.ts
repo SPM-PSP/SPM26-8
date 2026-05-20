@@ -3,7 +3,9 @@
 import Taro from '@tarojs/taro';
 import { Result } from '../types/backend';
 
-const BASE_URL = 'http://127.0.0.1:8080/api';
+// 真机调试时改为 PC 局域网 IP（如 http://10.135.50.18:8080/api）
+// 模拟器调试时用 http://127.0.0.1:8080/api
+const BASE_URL = 'http://10.135.50.18:8080/api';
 const TIMEOUT = 10000;
 
 interface RequestOptions {

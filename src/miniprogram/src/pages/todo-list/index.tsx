@@ -102,6 +102,7 @@ export default function TodoList() {
     <View style={{ minHeight: '100vh', backgroundColor: '#f8f8f6', paddingBottom: '120rpx' }}>
       {/* 顶部栏 */}
       <View style={{
+        position: 'sticky', top: 0, zIndex: 50,
         backgroundColor: 'rgba(255,255,255,0.95)',
         boxShadow: '0 2px 16px rgba(0,0,0,0.04)',
         padding: `${STATUS_BAR_HEIGHT + 12}px 36rpx 24rpx 36rpx`,
@@ -250,37 +251,46 @@ export default function TodoList() {
                         </Text>
                       ) : null}
 
-                      <View style={{ display: 'flex', alignItems: 'center', gap: '12rpx', flexWrap: 'wrap' }}>
-                        {overdueTask && (
-                          <Text style={{ fontSize: '22rpx', color: '#d4726f', fontWeight: 500 }}>已逾期</Text>
-                        )}
-                        {todo.endTime && (
-                          <View style={{ display: 'flex', alignItems: 'center', gap: '4rpx' }}>
-                            <Text style={{ fontSize: '22rpx', color: overdueTask ? '#d4726f' : '#8b8680' }}>
-                              {format(new Date(todo.endTime), 'MM/dd HH:mm', { locale: zhCN })}
+                      {/* 已逾期 — 单独一行 */}
+                      {overdueTask && (
+                        <Text style={{ fontSize: '24rpx', color: '#d4726f', fontWeight: 600, marginBottom: '6rpx', display: 'block' }}>
+                          ⚠ 已逾期
+                        </Text>
+                      )}
+
+                      {/* 日期 — 单独一行 */}
+                      {todo.endTime && (
+                        <View style={{ display: 'flex', alignItems: 'center', gap: '8rpx', marginBottom: '6rpx' }}>
+                          <Text style={{ fontSize: '22rpx', color: overdueTask ? '#d4726f' : '#8b8680' }}>
+                            {format(new Date(todo.endTime), 'MM/dd HH:mm', { locale: zhCN })}
+                          </Text>
+                          {urgentTask && (
+                            <Text style={{
+                              fontSize: '20rpx', fontFamily: 'monospace',
+                              backgroundColor: '#fef0ef', color: '#d4726f',
+                              padding: '4rpx 12rpx', borderRadius: '8rpx',
+                            }}>
+                              {getCountdown(todo.endTime)}
                             </Text>
-                            {urgentTask && (
-                              <Text style={{
-                                fontSize: '20rpx', fontFamily: 'monospace',
-                                backgroundColor: '#fef0ef', color: '#d4726f',
-                                padding: '4rpx 12rpx', borderRadius: '8rpx',
-                              }}>
-                                {getCountdown(todo.endTime)}
-                              </Text>
-                            )}
-                          </View>
-                        )}
-                        {targetName && (
-                          <View style={{ padding: '4rpx 16rpx', borderRadius: '20rpx', border: '1px solid #88a096' }}>
-                            <Text style={{ fontSize: '20rpx', color: '#88a096' }}>{targetName}</Text>
-                          </View>
-                        )}
-                        {planName && (
-                          <View style={{ padding: '4rpx 16rpx', borderRadius: '20rpx', border: '1px solid #ccc' }}>
-                            <Text style={{ fontSize: '20rpx', color: '#8b8680' }}>{planName}</Text>
-                          </View>
-                        )}
-                      </View>
+                          )}
+                        </View>
+                      )}
+
+                      {/* 标签 — 单独一行 */}
+                      {(targetName || planName) && (
+                        <View style={{ display: 'flex', alignItems: 'center', gap: '8rpx', flexWrap: 'wrap' }}>
+                          {targetName && (
+                            <View style={{ padding: '4rpx 16rpx', borderRadius: '20rpx', border: '1px solid #88a096' }}>
+                              <Text style={{ fontSize: '20rpx', color: '#88a096' }}>{targetName}</Text>
+                            </View>
+                          )}
+                          {planName && (
+                            <View style={{ padding: '4rpx 16rpx', borderRadius: '20rpx', border: '1px solid #ccc' }}>
+                              <Text style={{ fontSize: '20rpx', color: '#8b8680' }}>{planName}</Text>
+                            </View>
+                          )}
+                        </View>
+                      )}
 
                       {expandedBreakdownId === todo.id && (
                         <View style={{ marginTop: '16rpx' }}>
@@ -310,7 +320,7 @@ export default function TodoList() {
         )}
       </View>
 
-      {/* FAB 添加按钮 */}
+      {/* + 添加任务按钮 */}
       <View
         onClick={() => Taro.navigateTo({ url: '/pages/todo-add/index' })}
         style={{
@@ -325,11 +335,11 @@ export default function TodoList() {
         <Text style={{ color: '#fff', fontSize: '48rpx', lineHeight: 1 }}>+</Text>
       </View>
 
-      {/* Smart Input FAB */}
+      {/* 灵动输入按钮 */}
       <View
         onClick={() => setSmartInputOpen(true)}
         style={{
-          position: 'fixed', right: '36rpx', bottom: '300rpx',
+          position: 'fixed', right: '36rpx', bottom: '440rpx',
           width: '80rpx', height: '80rpx', borderRadius: '50%',
           backgroundColor: '#fff',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
