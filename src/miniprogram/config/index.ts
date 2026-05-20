@@ -41,6 +41,9 @@ export default defineConfig<'weapp'>(async (merge) => {
       enable: false,
     },
     mini: {
+      prebundle: {
+        enable: false,
+      },
       postcss: {
         pxtransform: {
           enable: true,

@@ -114,14 +114,14 @@ export default function TargetList() {
               </View>
             )}
 
-            <View style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '12rpx', justifyContent: 'space-between' }}>
+            <View style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between' }}>
               {quadrantConfig.map((quadrant) => {
                 const tasks = quadrantTasks[quadrant.key as keyof typeof quadrantTasks];
                 return (
                   <View
                     key={quadrant.key}
                     style={{
-                      width: 'calc(50% - 6rpx)', borderRadius: '16rpx', padding: '16rpx',
+                      width: '49%', borderRadius: '16rpx', padding: '16rpx', marginBottom: '12rpx',
                       background: `linear-gradient(135deg, ${quadrant.color1}, ${quadrant.color2})`,
                       boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
                       overflow: 'hidden',

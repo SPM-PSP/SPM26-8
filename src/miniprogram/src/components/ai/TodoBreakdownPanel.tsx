@@ -74,7 +74,7 @@ export function TodoBreakdownPanel({ todo, expanded, onToggle, onAdopt }: TodoBr
 
       {expanded && (
         <View style={{
-          width: '100%', marginTop: '16rpx', paddingTop: '16rpx',
+          width: '100%', flexBasis: '100%', marginTop: '16rpx', paddingTop: '16rpx',
           borderTop: '1px solid #f0f0f0',
         }}>
           {loading ? (

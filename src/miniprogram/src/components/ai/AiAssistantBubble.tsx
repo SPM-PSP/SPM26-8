@@ -36,7 +36,7 @@ export function AiAssistantBubble({ todos }: AiAssistantBubbleProps) {
       <View
         onClick={() => setOpen(true)}
         style={{
-          position: 'fixed', right: '36rpx', bottom: '320rpx', zIndex: 40,
+          position: 'fixed', right: '36rpx', bottom: '300rpx', zIndex: 40,
           width: '80rpx', height: '80rpx', borderRadius: '50%',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: 'linear-gradient(135deg, #88a096, #d4726f)',

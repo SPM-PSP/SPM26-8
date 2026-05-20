@@ -2,12 +2,33 @@ import { useState, useEffect } from 'react';
 import { View, Text, Input } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { STATUS_BAR_HEIGHT } from '../../utils/safeArea';
-import { Switch } from '@nutui/nutui-react-taro';
 import { useTodos } from '../../hooks/useTodos';
 import { useTargets } from '../../hooks/useTargets';
 import { usePlans } from '../../hooks/usePlans';
 import { useNotes } from '../../hooks/useNotes';
 import { useUserProfile } from '../../hooks/useUserProfile';
+
+function Toggle({ checked, disabled, onChange }: { checked: boolean; disabled?: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <View
+      onClick={() => { if (!disabled) onChange(!checked); }}
+      style={{
+        width: '80rpx', height: '44rpx', borderRadius: '22rpx',
+        backgroundColor: checked ? '#88a096' : '#d0d0d0',
+        display: 'flex', alignItems: 'center',
+        padding: '4rpx', flexShrink: 0,
+        opacity: disabled ? 0.4 : 1,
+      }}
+    >
+      <View style={{
+        width: '36rpx', height: '36rpx', borderRadius: '50%',
+        backgroundColor: '#fff',
+        marginLeft: checked ? '36rpx' : '0',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+      }} />
+    </View>
+  );
+}
 
 export default function Me() {
   const { todos } = useTodos();
@@ -43,6 +64,10 @@ export default function Me() {
       await saveReminderSettings(patch);
       Taro.showToast({ title: '已保存', icon: 'success' });
     } catch { /* handled */ }
+  };
+
+  const isTabPage = (url: string) => {
+    return ['/pages/todo-list/index', '/pages/target-list/index', '/pages/calendar/index', '/pages/statistics/index', '/pages/me/index'].includes(url);
   };
 
   const stats = [
@@ -106,7 +131,7 @@ export default function Me() {
           {stats.map((stat) => (
             <View
               key={stat.label}
-              onClick={() => Taro.switchTab({ url: stat.url })}
+              onClick={() => isTabPage(stat.url) ? Taro.switchTab({ url: stat.url }) : Taro.navigateTo({ url: stat.url })}
               style={{
                 flex: 1, borderRadius: '20rpx', padding: '24rpx 16rpx', textAlign: 'center',
                 background: `linear-gradient(135deg, ${stat.color1}, ${stat.color2})`,
@@ -154,7 +179,7 @@ export default function Me() {
             <View>
               <Text style={{ fontSize: '26rpx', color: '#4a4a4a', fontWeight: 500 }}>开启邮件提醒</Text>
             </View>
-            <Switch
+            <Toggle
               checked={emailReminderOn}
               disabled={!user?.email || saving}
               onChange={(checked) => patchReminder({ isReminderOn: checked ? 1 : 0 })}
@@ -180,12 +205,12 @@ export default function Me() {
           </Text>
           <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingVertical: '12rpx' }}>
             <Text style={{ fontSize: '28rpx', color: '#4a4a4a' }}>提前 24 小时</Text>
-            <Switch checked={beforeDay} disabled={!user?.email || saving}
+            <Toggle checked={beforeDay} disabled={!user?.email || saving}
               onChange={(checked) => patchReminder({ remindBefore24h: checked ? 1 : 0 })} />
           </View>
           <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingVertical: '12rpx' }}>
             <Text style={{ fontSize: '28rpx', color: '#4a4a4a' }}>提前 2 小时</Text>
-            <Switch checked={beforeHours} disabled={!user?.email || saving}
+            <Toggle checked={beforeHours} disabled={!user?.email || saving}
               onChange={(checked) => patchReminder({ remindBefore2h: checked ? 1 : 0 })} />
           </View>
         </View>

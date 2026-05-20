@@ -124,9 +124,9 @@ export default function TodoList() {
               key={item.value}
               onClick={() => setFilter(item.value as FilterStatus)}
               style={{
-                padding: '12rpx 32rpx',
-                borderRadius: '40rpx',
-                fontSize: '26rpx',
+                padding: '6rpx 28rpx',
+                borderRadius: '32rpx',
+                fontSize: '24rpx',
                 whiteSpace: 'nowrap',
                 background: filter === item.value
                   ? 'linear-gradient(135deg, #d4726f, #e9b893)'
@@ -135,7 +135,7 @@ export default function TodoList() {
                 boxShadow: filter === item.value ? '0 2px 8px rgba(212,114,111,0.3)' : 'none',
               }}
             >
-              <Text style={{ color: 'inherit', fontSize: '26rpx' }}>{item.label}</Text>
+              <Text style={{ color: 'inherit', fontSize: '24rpx' }}>{item.label}</Text>
             </View>
           ))}
         </View>
@@ -212,7 +212,7 @@ export default function TodoList() {
                     opacity: todo.completed ? 0.5 : 1,
                   }}
                 >
-                  <View style={{ display: 'flex', alignItems: 'flex-start', gap: '16rpx' }}>
+                  <View style={{ display: 'flex', alignItems: 'flex-start', gap: '16rpx', flexWrap: 'wrap' }}>
                     {/* Checkbox */}
                     <View
                       onClick={(e) => {
@@ -290,38 +290,26 @@ export default function TodoList() {
                       {(targetName || planName) && (
                         <View style={{ display: 'flex', alignItems: 'center', gap: '8rpx', flexWrap: 'wrap' }}>
                           {targetName && (
-                            <View style={{ padding: '4rpx 16rpx', borderRadius: '20rpx', border: '1px solid #88a096' }}>
-                              <Text style={{ fontSize: '20rpx', color: '#88a096' }}>{targetName}</Text>
+                            <View style={{ padding: '0 10rpx', borderRadius: '10rpx', border: '1px solid #88a096' }}>
+                              <Text style={{ fontSize: '18rpx', color: '#88a096', lineHeight: 1.3 }}>{targetName}</Text>
                             </View>
                           )}
                           {planName && (
-                            <View style={{ padding: '4rpx 16rpx', borderRadius: '20rpx', border: '1px solid #ccc' }}>
-                              <Text style={{ fontSize: '20rpx', color: '#8b8680' }}>{planName}</Text>
+                            <View style={{ padding: '0 10rpx', borderRadius: '10rpx', border: '1px solid #ccc' }}>
+                              <Text style={{ fontSize: '18rpx', color: '#8b8680', lineHeight: 1.3 }}>{planName}</Text>
                             </View>
                           )}
                         </View>
                       )}
 
-                      {expandedBreakdownId === todo.id && (
-                        <View style={{ marginTop: '16rpx' }}>
-                          <TodoBreakdownPanel
-                            todo={todo}
-                            expanded={expandedBreakdownId === todo.id}
-                            onToggle={() => setExpandedBreakdownId('')}
-                            onAdopt={(subtasks) => handleAdoptSubtasks(todo, subtasks)}
-                          />
-                        </View>
-                      )}
                     </View>
 
-                    {expandedBreakdownId !== todo.id && (
-                      <TodoBreakdownPanel
-                        todo={todo}
-                        expanded={false}
-                        onToggle={() => setExpandedBreakdownId(expandedBreakdownId === todo.id ? '' : todo.id)}
-                        onAdopt={(subtasks) => handleAdoptSubtasks(todo, subtasks)}
-                      />
-                    )}
+                    <TodoBreakdownPanel
+                      todo={todo}
+                      expanded={expandedBreakdownId === todo.id}
+                      onToggle={() => setExpandedBreakdownId(expandedBreakdownId === todo.id ? '' : todo.id)}
+                      onAdopt={(subtasks) => handleAdoptSubtasks(todo, subtasks)}
+                    />
                   </View>
                 </View>
               );
@@ -349,7 +337,7 @@ export default function TodoList() {
       <View
         onClick={() => setSmartInputOpen(true)}
         style={{
-          position: 'fixed', right: '36rpx', bottom: '440rpx',
+          position: 'fixed', right: '36rpx', bottom: '420rpx',
           width: '80rpx', height: '80rpx', borderRadius: '50%',
           backgroundColor: '#fff',
           display: 'flex', alignItems: 'center', justifyContent: 'center',

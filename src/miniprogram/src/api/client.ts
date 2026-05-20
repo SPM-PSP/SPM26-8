@@ -27,7 +27,7 @@ async function request<T>(
   options?: RequestOptions
 ): Promise<T> {
   const url = `${BASE_URL}${path}`;
-  const body = data !== undefined ? JSON.stringify(data) : undefined;
+  const body = data != null ? JSON.stringify(data) : undefined;
 
   console.log(`[API] ${method} ${url}`, body ? `body=${body.slice(0, 200)}` : '');
 
