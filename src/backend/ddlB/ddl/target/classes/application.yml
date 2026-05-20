@@ -10,7 +10,7 @@ spring:
     # 推荐在 IDEA Run Configuration → Environment variables 中设置 MYSQL_PASSWORD，勿把真实密码提交到 Git
     username: root
     # 密码若以 0 开头，必须加引号，否则 YAML 可能按八进制解析，导致与 MySQL 实际密码不一致
-    password: "050501"
+    password: "Xy666666."
     # createDatabaseIfNotExist：库 ddl_db 不存在时由驱动自动创建（仍需本机 MySQL 服务已启动）
     # allowPublicKeyRetrieval：MySQL 8 默认 caching_sha2_password，本地开发需允许取公钥，否则报 Public Key Retrieval is not allowed
     url: jdbc:mysql://localhost:3306/ddl_db?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true

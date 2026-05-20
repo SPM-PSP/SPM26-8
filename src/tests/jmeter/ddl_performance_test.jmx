@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="DDL-Master 性能测试" enabled="true">
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="base_url" elementType="Argument">
+            <stringProp name="Argument.name">base_url</stringProp>
+            <stringProp name="Argument.value">http://localhost:8080/api</stringProp>
+            <stringProp name="Argument.desc">后端服务基础URL</stringProp>
+          </elementProp>
+          <elementProp name="mock_user_id" elementType="Argument">
+            <stringProp name="Argument.name">mock_user_id</stringProp>
+            <stringProp name="Argument.value">test_user_001</stringProp>
+            <stringProp name="Argument.desc">模拟登录用户ID</stringProp>
+          </elementProp>
+        </collectionProp>
+      </elementProp>
+      <stringProp name="TestPlan.comments">DDL-Master 单业务场景性能测试：登录、获取任务列表、添加任务</stringProp>
+    </TestPlan>
+    <hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="性能测试线程组" enabled="true">
+        <stringProp name="ThreadGroup.num_threads">10</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">5</stringProp>
+        <stringProp name="ThreadGroup.duration">60</stringProp>
+        <stringProp name="ThreadGroup.delay">0</stringProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+      </ThreadGroup>
+      <hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="1. 模拟登录" enabled="true">
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" enabled="true">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="mockId" elementType="HTTPArgument">
+                <stringProp name="HTTPArgument.name">mockId</stringProp>
+                <stringProp name="HTTPArgument.value">${mock_user_id}</stringProp>
+                <stringProp name="HTTPArgument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.always_encode">true</boolProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain">localhost</stringProp>
+          <stringProp name="HTTPSampler.port">8080</stringProp>
+          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
+          <stringProp name="HTTPSampler.path">/api/user/login/mock</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+          <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+          <stringProp name="HTTPSampler.connect_timeout">30000</stringProp>
+          <stringProp name="HTTPSampler.response_timeout">30000</stringProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <ResponseAssertion guiclass="ResponseAssertionGui" testclass="ResponseAssertion" testname="登录响应断言" enabled="true">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="-1">登录成功</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.test_field">Text Response</stringProp>
+            <boolProp name="Assertion.assume_success">false</boolProp>
+            <stringProp name="Assertion.match_type">contains</stringProp>
+          </ResponseAssertion>
+          <hashTree/>
+          <JSONExtractor guiclass="JSONExtractorGui" testclass="JSONExtractor" testname="提取用户ID" enabled="true">
+            <stringProp name="JSONExtractor.refNames">user_id</stringProp>
+            <stringProp name="JSONExtractor.jsonPathExpr">$.data.uuid</stringProp>
+            <stringProp name="JSONExtractor.match_num">1</stringProp>
+            <stringProp name="JSONExtractor.defaultValue">NOT_FOUND</stringProp>
+          </JSONExtractor>
+          <hashTree/>
+        </hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="2. 获取任务列表" enabled="true">
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" enabled="true">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="userId" elementType="HTTPArgument">
+                <stringProp name="HTTPArgument.name">userId</stringProp>
+                <stringProp name="HTTPArgument.value">${user_id}</stringProp>
+                <stringProp name="HTTPArgument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.always_encode">true</boolProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain">localhost</stringProp>
+          <stringProp name="HTTPSampler.port">8080</stringProp>
+          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
+          <stringProp name="HTTPSampler.path">/api/todo/list</stringProp>
+          <stringProp name="HTTPSampler.method">GET</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+          <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+          <stringProp name="HTTPSampler.connect_timeout">30000</stringProp>
+          <stringProp name="HTTPSampler.response_timeout">30000</stringProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <ResponseAssertion guiclass="ResponseAssertionGui" testclass="ResponseAssertion" testname="任务列表响应断言" enabled="true">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="-1">success</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.test_field">Text Response</stringProp>
+            <boolProp name="Assertion.assume_success">false</boolProp>
+            <stringProp name="Assertion.match_type">contains</stringProp>
+          </ResponseAssertion>
+          <hashTree/>
+          <JSONExtractor guiclass="JSONExtractorGui" testclass="JSONExtractor" testname="提取第一个任务ID" enabled="true">
+            <stringProp name="JSONExtractor.refNames">first_task_uuid</stringProp>
+            <stringProp name="JSONExtractor.jsonPathExpr">$.data[0].uuid</stringProp>
+            <stringProp name="JSONExtractor.match_num">1</stringProp>
+            <stringProp name="JSONExtractor.defaultValue">NO_TASK</stringProp>
+          </JSONExtractor>
+          <hashTree/>
+        </hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="3. 备份/添加任务" enabled="true">
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" enabled="true">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="userId" elementType="HTTPArgument">
+                <stringProp name="HTTPArgument.name">userId</stringProp>
+                <stringProp name="HTTPArgument.value">${user_id}</stringProp>
+                <stringProp name="HTTPArgument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.always_encode">true</boolProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain">localhost</stringProp>
+          <stringProp name="HTTPSampler.port">8080</stringProp>
+          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
+          <stringProp name="HTTPSampler.path">/api/todo/backup</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+          <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+          <stringProp name="HTTPSampler.connect_timeout">30000</stringProp>
+          <stringProp name="HTTPSampler.response_timeout">30000</stringProp>
+          <elementProp name="HTTPSampler.postBodyRaw" elementType="Argument">
+            <stringProp name="Argument.value">[{"title":"性能测试任务","content":"JMeter测试生成的任务","status":0,"priority":1,"createdAt":"2024-01-01T10:00:00","planId":"","targetId":"","userId":"${user_id}"}]</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <ResponseAssertion guiclass="ResponseAssertionGui" testclass="ResponseAssertion" testname="备份响应断言" enabled="true">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="-1">同步成功</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.test_field">Text Response</stringProp>
+            <boolProp name="Assertion.assume_success">false</boolProp>
+            <stringProp name="Assertion.match_type">contains</stringProp>
+          </ResponseAssertion>
+          <hashTree/>
+        </hashTree>
+        <ConstantTimer guiclass="ConstantTimerGui" testclass="ConstantTimer" testname="思考时间(1秒)" enabled="true">
+          <stringProp name="ConstantTimer.delay">1000</stringProp>
+        </ConstantTimer>
+        <hashTree/>
+        <ViewResultsTree guiclass="ViewResultsTreeGui" testclass="ViewResultsTree" testname="查看结果树" enabled="true">
+          <boolProp name="ViewResultsTree.error_logging">true</boolProp>
+          <stringProp name="ViewResultsTree.limit">1000</stringProp>
+        </ViewResultsTree>
+        <hashTree/>
+        <SummaryReport guiclass="SummaryReportGui" testclass="SummaryReport" testname="摘要报告" enabled="true">
+          <boolProp name="SummaryReport.error_logging">false</boolProp>
+        </SummaryReport>
+        <hashTree/>
+        <AggregateReport guiclass="AggregateReportGui" testclass="AggregateReport" testname="聚合报告" enabled="true">
+          <boolProp name="AggregateReport.error_logging">false</boolProp>
+        </AggregateReport>
+        <hashTree/>
+        <JSR223Sampler guiclass="JSR223SamplerGui" testclass="JSR223Sampler" testname="打印用户ID" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="scriptText">log.info("当前用户ID: " + vars.get("user_id"))
+log.info("第一个任务ID: " + vars.get("first_task_uuid"))</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+      </hashTree>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>
