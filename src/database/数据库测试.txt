@@ -1,0 +1,66 @@
+-- 1. 创建数据库
+CREATE DATABASE IF NOT EXISTS ddl_db DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE ddl_db;
+
+-- 2. 创建用户表
+CREATE TABLE `user` (
+  `uuid` varchar(32) NOT NULL COMMENT '主键ID',
+  `openid` varchar(64) NOT NULL COMMENT '微信OpenID',
+  `nickname` varchar(64) DEFAULT '默认用户' COMMENT '用户昵称',
+  `avatar_url` varchar(255) DEFAULT NULL COMMENT '头像链接',
+  `is_reminder_on` tinyint(1) DEFAULT 1 COMMENT '提醒开关: 1开启, 0关闭',
+  `default_advance_minutes` int DEFAULT 30 COMMENT '默认提前提醒时间(分钟)',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`uuid`),
+  UNIQUE KEY `uk_openid` (`openid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
+
+-- 3. 创建日程表
+CREATE TABLE `todo_task` (
+  `uuid` varchar(32) NOT NULL,
+  `title` varchar(128) NOT NULL,
+  `content` text,
+  `status` tinyint(1) DEFAULT 0 COMMENT '0:未完成, 1:已完成',
+  `priority` int DEFAULT 0 COMMENT '优先级',
+  `plan_id` varchar(32) DEFAULT NULL,
+  `target_id` varchar(32) DEFAULT NULL,
+  `user_id` varchar(32) NOT NULL,
+  `created_at` varchar(64) DEFAULT NULL COMMENT '前端传入的时间字符串',
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='日程表';
+
+-- 4. 创建目标表
+CREATE TABLE `target` (
+  `uuid` varchar(32) NOT NULL,
+  `title` varchar(128) NOT NULL,
+  `content` text,
+  `progress` int DEFAULT 0 COMMENT '进度0-100',
+  `user_id` varchar(32) NOT NULL,
+  `created_at` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='目标表';
+
+-- 5. 创建计划表
+CREATE TABLE `plan` (
+  `uuid` varchar(32) NOT NULL,
+  `title` varchar(128) NOT NULL,
+  `content` text,
+  `progress` int DEFAULT 0 COMMENT '进度0-100',
+  `target_id` varchar(32) DEFAULT NULL,
+  `user_id` varchar(32) NOT NULL,
+  `created_at` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='计划表';
+
+-- 6. 创建备忘录表
+CREATE TABLE `note` (
+  `uuid` varchar(32) NOT NULL,
+  `title` varchar(128) NOT NULL,
+  `content` text,
+  `plan_id` varchar(32) DEFAULT NULL,
+  `target_id` varchar(32) DEFAULT NULL,
+  `user_id` varchar(32) NOT NULL,
+  `created_at` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='备忘录表';
