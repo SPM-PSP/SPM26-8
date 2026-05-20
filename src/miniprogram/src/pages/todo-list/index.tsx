@@ -350,7 +350,7 @@ export default function TodoList() {
         onClick={() => setSmartInputOpen(true)}
         style={{
           position: 'fixed', right: '36rpx', bottom: '440rpx',
-          width: '80rpx', height: '80rpx', borderRadius: '50%',
+          width: '100rpx', height: '100rpx', borderRadius: '50%',
           backgroundColor: '#fff',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
