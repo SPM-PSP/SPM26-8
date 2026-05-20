@@ -211,7 +211,7 @@ export default function AddPlan() {
         <View
           onClick={handleSave}
           style={{
-            width: '100%', padding: '28rpx', borderRadius: '16rpx',
+            width: '100%', boxSizing: 'border-box', padding: '28rpx', borderRadius: '16rpx',
             background: 'linear-gradient(135deg, #88a096, #b8a89d)', textAlign: 'center',
           }}
         >

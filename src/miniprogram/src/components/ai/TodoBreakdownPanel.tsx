@@ -111,7 +111,7 @@ export function TodoBreakdownPanel({ todo, expanded, onToggle, onAdopt }: TodoBr
               <View
                 onClick={handleAdopt}
                 style={{
-                  width: '100%', padding: '20rpx', borderRadius: '40rpx',
+                  width: '100%', boxSizing: 'border-box', padding: '20rpx', borderRadius: '40rpx',
                   backgroundColor: '#88a096', textAlign: 'center', marginTop: '12rpx',
                 }}
               >

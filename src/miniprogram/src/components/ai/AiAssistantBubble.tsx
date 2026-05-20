@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { View, Text } from '@tarojs/components';
-import { Dialog } from '@nutui/nutui-react-taro';
 import { analyzeProactiveContext } from '../../services/ai';
 import { Todo } from '../../types';
 
@@ -37,7 +36,7 @@ export function AiAssistantBubble({ todos }: AiAssistantBubbleProps) {
       <View
         onClick={() => setOpen(true)}
         style={{
-          position: 'fixed', right: '36rpx', bottom: '280rpx', zIndex: 40,
+          position: 'fixed', right: '36rpx', bottom: '320rpx', zIndex: 40,
           width: '100rpx', height: '100rpx', borderRadius: '50%',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: 'linear-gradient(135deg, #88a096, #d4726f)',
@@ -55,13 +54,25 @@ export function AiAssistantBubble({ todos }: AiAssistantBubbleProps) {
       </View>
 
       {open && (
-        <Dialog visible title="任务概览"
-          onConfirm={() => setOpen(false)}
-          onCancel={() => setOpen(false)}
-          confirmText="知道了"
-          cancelText="关闭"
+        <View
+          onClick={() => setOpen(false)}
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 200,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
         >
-          <View style={{ padding: '12rpx 0' }}>
+          <View
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '600rpx', maxHeight: '80vh', backgroundColor: '#fff',
+              borderRadius: '24rpx', padding: '36rpx', overflow: 'auto',
+            }}
+          >
+            <Text style={{ fontSize: '32rpx', fontWeight: 600, color: '#4a4a4a', marginBottom: '24rpx', display: 'block' }}>
+              任务概览
+            </Text>
+
             <View style={{
               background: 'linear-gradient(135deg, #f8f8f6, #fff)', borderRadius: '16rpx',
               padding: '20rpx', marginBottom: '16rpx',
@@ -76,22 +87,29 @@ export function AiAssistantBubble({ todos }: AiAssistantBubbleProps) {
                 <Text style={{ fontSize: '24rpx', color: '#8b8680', lineHeight: 1.5 }}>{insight.detail}</Text>
               )}
             </View>
+
             {todos.length > 0 && (
-              <View style={{
-                backgroundColor: '#f8f8f6', borderRadius: '16rpx', padding: '20rpx',
-              }}>
-                <Text style={{ fontSize: '24rpx', color: '#4a4a4a', lineHeight: 1.8 }}>
-                  {tips}
-                </Text>
+              <View style={{ backgroundColor: '#f8f8f6', borderRadius: '16rpx', padding: '20rpx', marginBottom: '24rpx' }}>
+                <Text style={{ fontSize: '24rpx', color: '#4a4a4a', lineHeight: 1.8 }}>{tips}</Text>
               </View>
             )}
             {todos.length === 0 && (
-              <Text style={{ fontSize: '24rpx', color: '#8b8680', textAlign: 'center', padding: '20rpx 0' }}>
+              <Text style={{ fontSize: '24rpx', color: '#8b8680', textAlign: 'center', padding: '20rpx 0', marginBottom: '24rpx' }}>
                 还没有任务，去创建一个吧 ✨
               </Text>
             )}
+
+            <View
+              onClick={() => setOpen(false)}
+              style={{
+                width: '100%', boxSizing: 'border-box', padding: '24rpx', borderRadius: '16rpx',
+                background: 'linear-gradient(135deg, #88a096, #b8a89d)', textAlign: 'center',
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: '28rpx' }}>知道了</Text>
+            </View>
           </View>
-        </Dialog>
+        </View>
       )}
     </>
   );

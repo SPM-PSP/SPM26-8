@@ -403,7 +403,7 @@ export function AiTargetWizardDialog({
             <View
               onClick={handleApply}
               style={{
-                width: '100%', padding: '24rpx', borderRadius: '40rpx',
+                width: '100%', boxSizing: 'border-box', padding: '24rpx', borderRadius: '40rpx',
                 background: 'linear-gradient(135deg, #88a096, #7a9188)',
                 textAlign: 'center', marginBottom: '12rpx',
               }}
@@ -413,7 +413,7 @@ export function AiTargetWizardDialog({
             <View
               onClick={() => setPhase('chat')}
               style={{
-                width: '100%', padding: '16rpx', borderRadius: '40rpx',
+                width: '100%', boxSizing: 'border-box', padding: '16rpx', borderRadius: '40rpx',
                 border: '1px solid #ccc', textAlign: 'center',
               }}
             >

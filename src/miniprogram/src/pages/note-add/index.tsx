@@ -177,7 +177,7 @@ export default function AddNote() {
           <View
             onClick={handleSave}
             style={{
-              width: '100%', padding: '24rpx', borderRadius: '16rpx',
+              width: '100%', boxSizing: 'border-box', padding: '24rpx', borderRadius: '16rpx',
               background: 'linear-gradient(135deg, #e9b893, #d4c5b9)',
               textAlign: 'center',
             }}

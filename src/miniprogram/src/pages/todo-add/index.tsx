@@ -196,7 +196,7 @@ export default function AddTodo() {
             <View
               onClick={handleAiParse}
               style={{
-                width: '100%', padding: '20rpx', borderRadius: '40rpx',
+                width: '100%', boxSizing: 'border-box', padding: '20rpx', borderRadius: '40rpx',
                 border: '1px solid rgba(212,114,111,0.3)', textAlign: 'center',
                 opacity: aiParsing || !aiText.trim() ? 0.5 : 1,
               }}
@@ -418,7 +418,7 @@ export default function AddTodo() {
         <View
           onClick={handleSave}
           style={{
-            width: '100%', padding: '28rpx', borderRadius: '16rpx',
+            width: '100%', boxSizing: 'border-box', padding: '28rpx', borderRadius: '16rpx',
             background: 'linear-gradient(135deg, #d4726f, #e9b893)', textAlign: 'center',
           }}
         >

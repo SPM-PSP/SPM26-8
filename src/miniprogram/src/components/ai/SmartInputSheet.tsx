@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { View, Text } from '@tarojs/components';
+import { View, Text, Textarea } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { Dialog } from '@nutui/nutui-react-taro';
 import { parseTodoFromText, ParsedTodoDraft, isAiConfigured } from '../../services/ai';
 import { Todo } from '../../types';
 import { format } from 'date-fns';
@@ -59,12 +58,23 @@ export function SmartInputSheet({ open, onOpenChange, onConfirm }: SmartInputShe
   if (!open) return null;
 
   return (
-    <Dialog visible title=""
-      onCancel={() => onOpenChange(false)}
-      cancelText="关闭"
-      style={{ borderRadius: '24rpx' }}
+    <View
+      onClick={() => onOpenChange(false)}
+      style={{
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 200,
+        display: 'flex', alignItems: 'flex-end',
+      }}
     >
-      <View>
+      <View
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: '100%', backgroundColor: '#fff',
+          borderTopLeftRadius: '24rpx', borderTopRightRadius: '24rpx',
+          padding: '36rpx', paddingBottom: '60rpx', maxHeight: '80vh',
+          overflow: 'auto',
+        }}
+      >
         <View style={{ display: 'flex', alignItems: 'center', gap: '8rpx', marginBottom: '16rpx' }}>
           <Text style={{ fontSize: '28rpx' }}>✨</Text>
           <Text style={{ fontSize: '24rpx', color: '#8b8680' }}>
@@ -74,7 +84,7 @@ export function SmartInputSheet({ open, onOpenChange, onConfirm }: SmartInputShe
 
         <View style={{ position: 'relative', marginBottom: '16rpx' }}>
           <View style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16rpx', padding: '16rpx', backgroundColor: '#f5f1ed' }}>
-            <textarea
+            <Textarea
               style={{ width: '100%', fontSize: '28rpx', color: '#4a4a4a', minHeight: '160rpx' }}
               value={text}
               onInput={(e) => { setText(e.detail.value); setDraft(null); }}
@@ -82,20 +92,12 @@ export function SmartInputSheet({ open, onOpenChange, onConfirm }: SmartInputShe
               placeholderStyle="color: #ccc; font-size: 26rpx"
             />
           </View>
-          <View style={{ position: 'absolute', right: '12rpx', bottom: '12rpx' }}>
-            <View style={{
-              width: '64rpx', height: '64rpx', borderRadius: '50%',
-              backgroundColor: '#f5f1ed', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Text style={{ fontSize: '28rpx' }}>🎤</Text>
-            </View>
-          </View>
         </View>
 
         <View
           onClick={handleParse}
           style={{
-            width: '100%', padding: '20rpx', borderRadius: '40rpx',
+            width: '100%', boxSizing: 'border-box', padding: '20rpx', borderRadius: '40rpx',
             background: 'linear-gradient(135deg, #d4726f, #e9b893)',
             textAlign: 'center', marginBottom: '16rpx',
             opacity: parsing || !text.trim() ? 0.5 : 1,
@@ -148,7 +150,7 @@ export function SmartInputSheet({ open, onOpenChange, onConfirm }: SmartInputShe
             <View
               onClick={handleConfirm}
               style={{
-                width: '100%', padding: '20rpx', borderRadius: '40rpx',
+                width: '100%', boxSizing: 'border-box', padding: '20rpx', borderRadius: '40rpx',
                 backgroundColor: '#88a096', textAlign: 'center',
               }}
             >
@@ -157,6 +159,6 @@ export function SmartInputSheet({ open, onOpenChange, onConfirm }: SmartInputShe
           </View>
         )}
       </View>
-    </Dialog>
+    </View>
   );
 }

@@ -148,7 +148,7 @@ export default function AddTarget() {
           <View
             onClick={() => setWizardOpen(true)}
             style={{
-              width: '100%', padding: '24rpx', borderRadius: '20rpx',
+              width: '100%', boxSizing: 'border-box', padding: '24rpx', borderRadius: '20rpx',
               border: '1px solid rgba(212,114,111,0.3)', textAlign: 'center',
               marginBottom: '24rpx', backgroundColor: '#fff',
             }}
@@ -261,7 +261,7 @@ export default function AddTarget() {
         <View
           onClick={handleSave}
           style={{
-            width: '60%', margin: '0 auto', padding: '24rpx', borderRadius: '40rpx',
+            width: '60%', boxSizing: 'border-box', margin: '0 auto', padding: '24rpx', borderRadius: '40rpx',
             background: 'linear-gradient(135deg, #d4726f, #e9b893)', textAlign: 'center',
           }}
         >
