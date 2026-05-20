@@ -9,9 +9,11 @@ import { useTargets } from '../hooks/useTargets';
 import { FilterStatus } from '../types';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import { useAuth } from '../context/AuthContext';
 
 export function PlanList() {
-  const { plans } = usePlans();
+  const { user } = useAuth();
+  const { plans, userId } = usePlans();
   const { targets } = useTargets();
   const [filter, setFilter] = useState<FilterStatus>('all');
 
@@ -32,7 +34,7 @@ export function PlanList() {
       {/* 顶部栏 */}
       <div className="bg-white/95 backdrop-blur-lg" style={{boxShadow: '0 2px 16px rgba(0, 0, 0, 0.04)'}}>
         <div className="max-w-screen-xl mx-auto px-6 py-5">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-1">
             <h1 className="text-xl font-semibold text-[#4a4a4a]">计划</h1>
             <Link to="/plans/new">
               <button className="w-8 h-8 bg-gradient-to-br from-[#88a096] to-[#b8a89d] rounded-full flex items-center justify-center text-white">
@@ -40,6 +42,9 @@ export function PlanList() {
               </button>
             </Link>
           </div>
+          <p className="text-xs text-[#8b8680] mb-4">
+            {user?.nickname || userId} · 共 {plans.length} 条（user_id={userId}）
+          </p>
 
           <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterStatus)}>
             <TabsList className="grid w-full grid-cols-3">

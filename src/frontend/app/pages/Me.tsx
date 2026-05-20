@@ -24,12 +24,15 @@ import { usePlans } from '../hooks/usePlans';
 import { useNotes } from '../hooks/useNotes';
 import { toast } from 'sonner';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { reminderApi } from '../api/reminder';
+import { useAuth } from '../context/AuthContext';
 
 export function Me() {
   const { todos } = useTodos();
   const { targets } = useTargets();
   const { plans } = usePlans();
   const { notes } = useNotes();
+  const { userId } = useAuth();
   const { user, loading: profileLoading, saving, saveReminderSettings, sendTestEmail } =
     useUserProfile();
 
@@ -61,6 +64,33 @@ export function Me() {
     try {
       await saveReminderSettings(patch);
       toast.success('已保存');
+    } catch {
+      /* handled */
+    }
+  };
+
+  const handleScanReminders = async () => {
+    if (!userId) {
+      toast.error('请先登录');
+      return;
+    }
+    if (!user?.email) {
+      toast.error('请先绑定邮箱');
+      return;
+    }
+    if (!emailReminderOn) {
+      toast.error('请先开启邮件提醒');
+      return;
+    }
+    try {
+      const sent = await reminderApi.scanNow(userId);
+      if (sent > 0) {
+        toast.success(`已向 ${user.email} 重发 ${sent} 封临期提醒（24h / 2h 内到期的任务，含已发过的）`);
+      } else {
+        toast.info(
+          '暂无邮件发出：请确认有未完成、已填结束时间且在 24 小时或 2 小时内到期的任务，并已开启对应提醒开关。',
+        );
+      }
     } catch {
       /* handled */
     }
@@ -135,8 +165,8 @@ export function Me() {
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <h2 className="text-xl font-semibold mb-1">效率达人</h2>
-              <p className="text-sm opacity-90">已坚持使用 30 天</p>
+              <h2 className="text-xl font-semibold mb-1">{user?.nickname || '未登录'}</h2>
+              <p className="text-sm opacity-90 font-mono opacity-80">ID: {userId}</p>
             </div>
             <Badge className="bg-white/20 text-white border-white/30 rounded-full">
               <Award className="w-3 h-3 mr-1" />
@@ -179,7 +209,9 @@ export function Me() {
             邮箱与临期提醒
           </h3>
           <p className="text-xs text-[#8b8680] leading-relaxed">
-            绑定邮箱后，后端每分钟扫描未完成任务；在截止前 24 小时、2 小时各发送一封邮件（每种仅发一次）。任务须填写结束时间并已保存同步。
+            绑定邮箱后，定时会在截止前 24 小时、2 小时各发一封（每种每任务仅一次）。点「立即检查」会对临期任务
+            <span className="font-medium text-[#4a4a4a]">全部重发</span>
+            一遍（不管是否发过）。任务须填写结束时间并已同步到服务器。
           </p>
 
           <div>
@@ -221,15 +253,26 @@ export function Me() {
             />
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full text-sm"
-            disabled={!user?.email || saving}
-            onClick={sendTestEmail}
-          >
-            发送测试邮件
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full text-sm"
+              disabled={!user?.email || saving}
+              onClick={sendTestEmail}
+            >
+              发送测试邮件
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full text-sm"
+              disabled={!user?.email || !emailReminderOn || saving}
+              onClick={handleScanReminders}
+            >
+              立即检查临期任务
+            </Button>
+          </div>
         </div>
 
         {/* 提醒时间 */}

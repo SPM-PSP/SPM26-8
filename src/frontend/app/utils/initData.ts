@@ -155,19 +155,17 @@ export const sampleNotes: Note[] = [
   },
 ];
 
-export function initializeSampleData() {
-  // 检查是否已有数据
-  const hasTargets = localStorage.getItem('targets');
-  const hasPlans = localStorage.getItem('plans');
-  const hasTodos = localStorage.getItem('todos');
-  const hasNotes = localStorage.getItem('notes');
+export function initializeSampleData(userId: string) {
+  const hasTargets = localStorage.getItem(`targets:${userId}`);
+  const hasPlans = localStorage.getItem(`plans:${userId}`);
+  const hasTodos = localStorage.getItem(`todos:${userId}`);
+  const hasNotes = localStorage.getItem(`notes:${userId}`);
 
-  // 只在没有任何数据时初始化示例数据
   if (!hasTargets && !hasPlans && !hasTodos && !hasNotes) {
-    localStorage.setItem('targets', JSON.stringify(sampleTargets));
-    localStorage.setItem('plans', JSON.stringify(samplePlans));
-    localStorage.setItem('todos', JSON.stringify(sampleTodos));
-    localStorage.setItem('notes', JSON.stringify(sampleNotes));
+    localStorage.setItem(`targets:${userId}`, JSON.stringify(sampleTargets));
+    localStorage.setItem(`plans:${userId}`, JSON.stringify(samplePlans));
+    localStorage.setItem(`todos:${userId}`, JSON.stringify(sampleTodos));
+    localStorage.setItem(`notes:${userId}`, JSON.stringify(sampleNotes));
     return true;
   }
   return false;

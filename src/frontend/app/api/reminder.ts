@@ -1,12 +1,12 @@
 import { apiClient } from './client';
-import { MOCK_USER_ID } from '../utils/typeMapper';
+import { getStoredOpenid } from '../utils/authStorage';
 
 export const reminderApi = {
-  async scanNow(): Promise<number> {
-    return apiClient.post('/reminder/scan');
+  async scanNow(openid: string = getStoredOpenid()): Promise<number> {
+    return apiClient.post('/reminder/scan', null, { params: { openid } });
   },
 
-  async sendTestMail(openid: string = MOCK_USER_ID): Promise<string> {
+  async sendTestMail(openid: string = getStoredOpenid()): Promise<string> {
     return apiClient.post('/reminder/test', null, { params: { openid } });
   },
 };

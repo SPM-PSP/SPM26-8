@@ -1,21 +1,37 @@
+import { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router';
-import { Edit, Plus, Target as TargetIcon, Calendar, Weight } from 'lucide-react';
+import { Edit, Plus, Target as TargetIcon, Calendar, Weight, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { PageHeader } from '../components/PageHeader';
 import { EmptyState } from '../components/EmptyState';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../components/ui/alert-dialog';
 import { useTargets } from '../hooks/useTargets';
 import { usePlans } from '../hooks/usePlans';
-import { format } from 'date-fns';
+import { useTodos } from '../hooks/useTodos';
 import { zhCN } from 'date-fns/locale';
+import { formatDateSafe } from '../utils/formatDate';
+import { useTargetActions } from '../hooks/useTargetActions';
 
 export function TargetDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getTarget } = useTargets();
   const { plans } = usePlans();
+  const { getTodosByTarget, removeTargetCascade } = useTargetActions();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const target = id ? getTarget(id) : null;
 
@@ -35,8 +51,16 @@ export function TargetDetail() {
   }
 
   const targetPlans = plans.filter(p => p.targetId === id);
+  const targetTodos = id ? getTodosByTarget(id) : [];
   const completedPlans = targetPlans.filter(p => p.completed).length;
   const progress = targetPlans.length > 0 ? (completedPlans / targetPlans.length) * 100 : 0;
+
+  const handleDelete = async () => {
+    if (!id) return;
+    await removeTargetCascade(id);
+    toast.success('目标已删除');
+    navigate('/targets');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -44,11 +68,21 @@ export function TargetDetail() {
         title="目标详情"
         showBack
         rightElement={
-          <Link to={`/targets/${id}/edit`}>
-            <Button size="sm" variant="ghost">
-              <Edit className="w-4 h-4" />
+          <div className="flex items-center gap-1">
+            <Link to={`/targets/${id}/edit`}>
+              <Button size="sm" variant="ghost">
+                <Edit className="w-4 h-4" />
+              </Button>
+            </Link>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-[#d4726f]"
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <Trash2 className="w-4 h-4" />
             </Button>
-          </Link>
+          </div>
         }
       />
 
@@ -70,9 +104,9 @@ export function TargetDetail() {
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <Calendar className="w-4 h-4" />
               <span>
-                {format(new Date(target.beginTime), 'yyyy年MM月dd日', { locale: zhCN })}
+                {formatDateSafe(target.beginTime, 'yyyy年MM月dd日', { locale: zhCN })}
                 {' 至 '}
-                {format(new Date(target.endTime), 'yyyy年MM月dd日', { locale: zhCN })}
+                {formatDateSafe(target.endTime, 'yyyy年MM月dd日', { locale: zhCN })}
               </span>
             </div>
 
@@ -130,9 +164,9 @@ export function TargetDetail() {
                     <div className="flex items-center gap-4 text-xs text-gray-500">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        <span>{format(new Date(plan.beginTime), 'MM/dd', { locale: zhCN })}</span>
+                        <span>{formatDateSafe(plan.beginTime, 'MM/dd', { locale: zhCN })}</span>
                         <span>-</span>
-                        <span>{format(new Date(plan.endTime), 'MM/dd', { locale: zhCN })}</span>
+                        <span>{formatDateSafe(plan.endTime, 'MM/dd', { locale: zhCN })}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Weight className="w-3 h-3" />
@@ -146,6 +180,29 @@ export function TargetDetail() {
           )}
         </div>
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除</AlertDialogTitle>
+            <AlertDialogDescription>
+              删除后将无法恢复。
+              {targetPlans.length > 0 || targetTodos.length > 0
+                ? ` 将同时删除 ${targetPlans.length} 个关联计划、${targetTodos.length} 条关联任务。`
+                : ' 确定要删除这个目标吗？'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-gradient-to-r from-[#d4726f] to-[#e9b893] hover:opacity-90"
+            >
+              删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

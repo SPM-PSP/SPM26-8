@@ -1,39 +1,39 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Note } from '../types';
-import { useLocalStorage } from './useLocalStorage';
+import { useUserScopedStorage } from './useUserScopedStorage';
 import { noteApi } from '../api/note';
-import { toBackendNote, fromBackendNote, MOCK_USER_ID } from '../utils/typeMapper';
+import { toBackendNote, fromBackendNote } from '../utils/typeMapper';
+import { generateId } from '../utils/uuid';
+import { useAuth } from '../context/AuthContext';
 
 export function useNotes() {
-  const [notes, setNotes] = useLocalStorage<Note[]>('notes', []);
+  const { userId, switching } = useAuth();
+  const [notes, setNotes] = useUserScopedStorage<Note[]>('notes', userId, []);
   const [syncing, setSyncing] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // 启动时从后端拉取数据
-  useEffect(() => {
-    syncFromBackend();
-  }, []);
-
-  // 从后端拉取数据
-  const syncFromBackend = async () => {
+  const syncFromBackend = useCallback(async () => {
+    if (!userId || switching) return;
     try {
       setLoading(true);
-      const backendNotes = await noteApi.restore(MOCK_USER_ID);
-      const frontendNotes = backendNotes.map(fromBackendNote);
-      setNotes(frontendNotes);
+      const backendNotes = await noteApi.restore(userId);
+      setNotes(backendNotes.map(fromBackendNote));
     } catch (error) {
       console.error('从后端同步笔记失败:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, switching, setNotes]);
 
-  // 同步到后端
+  useEffect(() => {
+    syncFromBackend();
+  }, [syncFromBackend]);
+
   const syncToBackend = async (updatedNotes: Note[]) => {
+    if (!userId) return;
     try {
       setSyncing(true);
-      const backendNotes = updatedNotes.map(toBackendNote);
-      await noteApi.backup(MOCK_USER_ID, backendNotes);
+      await noteApi.backup(userId, updatedNotes.map((n) => toBackendNote(n, userId)));
     } catch (error) {
       console.error('同步笔记到后端失败:', error);
     } finally {
@@ -45,7 +45,7 @@ export function useNotes() {
     const now = new Date().toISOString();
     const newNote: Note = {
       ...note,
-      id: crypto.randomUUID(),
+      id: generateId(),
       createdAt: now,
       updatedAt: now,
     };
@@ -56,20 +56,20 @@ export function useNotes() {
   };
 
   const updateNote = async (id: string, updates: Partial<Note>) => {
-    const updated = notes.map(n => n.id === id ? { ...n, ...updates, updatedAt: new Date().toISOString() } : n);
+    const updated = notes.map((n) =>
+      n.id === id ? { ...n, ...updates, updatedAt: new Date().toISOString() } : n,
+    );
     setNotes(updated);
     await syncToBackend(updated);
   };
 
   const deleteNote = async (id: string) => {
-    const updated = notes.filter(n => n.id !== id);
+    const updated = notes.filter((n) => n.id !== id);
     setNotes(updated);
     await syncToBackend(updated);
   };
 
-  const getNote = (id: string) => {
-    return notes.find(n => n.id === id);
-  };
+  const getNote = (id: string) => notes.find((n) => n.id === id);
 
   return {
     notes,
@@ -80,5 +80,6 @@ export function useNotes() {
     syncing,
     loading,
     syncFromBackend,
+    userId,
   };
 }

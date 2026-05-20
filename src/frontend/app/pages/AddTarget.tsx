@@ -20,6 +20,7 @@ import {
 } from '../components/ui/alert-dialog';
 import { useTargets } from '../hooks/useTargets';
 import { useTodos } from '../hooks/useTodos';
+import { useTargetActions } from '../hooks/useTargetActions';
 import { format } from 'date-fns';
 import { Sparkles, Info } from 'lucide-react';
 import { isAiConfigured } from '../services/ai';
@@ -31,8 +32,9 @@ import {
 export function AddTarget() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addTarget, updateTarget, deleteTarget, getTarget } = useTargets();
-  const { addTodo } = useTodos();
+  const { addTarget, updateTarget, getTarget } = useTargets();
+  const { addTodos } = useTodos();
+  const { removeTargetCascade, getTodosByTarget, getPlansByTarget } = useTargetActions();
   const isEdit = !!id;
 
   const [title, setTitle] = useState('');
@@ -43,7 +45,7 @@ export function AddTarget() {
   const [completed, setCompleted] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
-  const [pendingSync, setPendingSync] = useState<TargetWizardResult | null>(null);
+  const [wizardApplying, setWizardApplying] = useState(false);
 
   useEffect(() => {
     if (isEdit && id) {
@@ -59,16 +61,42 @@ export function AddTarget() {
     }
   }, [id, isEdit, getTarget]);
 
-  const handleWizardApply = (result: TargetWizardResult) => {
-    setTitle(result.target.title);
-    setDesc(result.target.desc);
-    setBeginTime(result.target.beginTime);
-    setEndTime(result.target.endTime);
-    setWeight(result.target.weight);
-    if (result.syncTodos && result.todos.length > 0) {
-      setPendingSync(result);
-    } else {
-      setPendingSync(null);
+  const handleWizardApply = async (result: TargetWizardResult) => {
+    setWizardApplying(true);
+    try {
+      const created = await addTarget({
+        title: result.target.title,
+        desc: result.target.desc,
+        beginTime: result.target.beginTime,
+        endTime: result.target.endTime,
+        weight: result.target.weight,
+        completed: false,
+      });
+
+      if (result.todos.length > 0) {
+        await addTodos(
+          result.todos.map((todo) => ({
+            title: todo.title,
+            desc: todo.desc || '',
+            level: todo.level,
+            category: todo.category,
+            completed: false,
+            targetId: created.id,
+            isContinuous: false,
+            beginTime: todo.beginTime,
+            endTime: todo.endTime,
+          })),
+        );
+        toast.success(`已创建目标，并添加 ${result.todos.length} 条任务到任务栏`);
+      } else {
+        toast.success('目标已创建');
+      }
+      navigate('/targets');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '创建失败');
+      throw e;
+    } finally {
+      setWizardApplying(false);
     }
   };
 
@@ -99,34 +127,16 @@ export function AddTarget() {
       return;
     }
 
-    const created = await addTarget(payload);
-
-    if (pendingSync?.syncTodos && pendingSync.todos.length > 0) {
-      for (const todo of pendingSync.todos) {
-        await addTodo({
-          title: todo.title,
-          desc: todo.desc || '',
-          level: todo.level,
-          category: todo.category,
-          completed: false,
-          targetId: created.id,
-          isContinuous: false,
-        });
-      }
-      setPendingSync(null);
-      toast.success(`目标已创建，并同步 ${pendingSync.todos.length} 条任务到任务栏`);
-    } else {
-      toast.success('目标创建成功');
-    }
+    await addTarget(payload);
+    toast.success('目标创建成功');
     navigate('/targets');
   };
 
-  const handleDelete = () => {
-    if (id) {
-      deleteTarget(id);
-      toast.success('目标已删除');
-      navigate('/targets');
-    }
+  const handleDelete = async () => {
+    if (!id) return;
+    await removeTargetCascade(id);
+    toast.success('目标已删除');
+    navigate('/targets');
   };
 
   return (
@@ -158,10 +168,8 @@ export function AddTarget() {
             <div>
               <p className="font-medium mb-1">目标、计划、任务的关系</p>
               <p className="text-[#8b8680] text-xs leading-relaxed">
-                <strong>目标</strong>是长期方向（如一个月减重）；
-                <strong>计划</strong>是阶段安排（可在目标详情里新建，并关联该目标）；
-                <strong>任务</strong>是具体要做的事（如今日跑步），会出现在任务栏。
-                健身目标通常包含每周游泳、跑步等任务，可用 AI 规划后勾选同步到任务栏。
+                <strong>目标</strong>是长期方向（如一周塑形）；
+                <strong>任务</strong>是每次具体训练。使用 AI 规划助手可在确认后一次性创建目标与多条任务。
               </p>
             </div>
           </div>
@@ -180,19 +188,6 @@ export function AddTarget() {
               {isAiConfigured() ? '' : '（演示）'}
             </span>
           </Button>
-        )}
-
-        {pendingSync && pendingSync.todos.length > 0 && (
-          <div className="text-xs text-[#88a096] bg-white rounded-[12px] px-3 py-2 border border-[#88a096]/30">
-            保存时将同步创建 {pendingSync.todos.length} 条关联任务到任务栏
-            <button
-              type="button"
-              className="ml-2 underline"
-              onClick={() => setPendingSync(null)}
-            >
-              取消同步
-            </button>
-          </div>
         )}
 
         <div
@@ -287,6 +282,7 @@ export function AddTarget() {
         open={wizardOpen}
         onOpenChange={setWizardOpen}
         onApply={handleWizardApply}
+        applying={wizardApplying}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -294,7 +290,11 @@ export function AddTarget() {
           <AlertDialogHeader>
             <AlertDialogTitle>确认删除</AlertDialogTitle>
             <AlertDialogDescription>
-              删除后将无法恢复，确定要删除这个目标吗？
+              删除后将无法恢复。
+              {id &&
+              (getPlansByTarget(id).length > 0 || getTodosByTarget(id).length > 0)
+                ? ` 将同时删除 ${getPlansByTarget(id).length} 个关联计划、${getTodosByTarget(id).length} 条关联任务。`
+                : ' 确定要删除这个目标吗？'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

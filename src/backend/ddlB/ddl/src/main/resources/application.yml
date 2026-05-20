@@ -1,5 +1,6 @@
 server:
   port: 8080 # 后端服务启动端口
+  address: 0.0.0.0 # 监听所有网卡，局域网内其他设备可通过本机 IP:8080 访问
 
 spring:
   config:

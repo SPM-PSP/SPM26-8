@@ -1,5 +1,6 @@
 import { Todo } from '../types';
 import { AI_CONFIG } from '../config/ai.config';
+import { expandSuggestedTodos, parseTimesPerWeek } from '../utils/targetTodoScheduler';
 
 export interface ParsedTodoDraft {
   title: string;
@@ -413,6 +414,9 @@ export interface SuggestedTargetTodo {
   desc?: string;
   category: string;
   level: Todo['level'];
+  /** yyyy-MM-ddTHH:mm，用于同步到任务栏与邮件提醒 */
+  beginTime?: string;
+  endTime?: string;
 }
 
 export interface TargetWizardTurn {
@@ -421,6 +425,8 @@ export interface TargetWizardTurn {
   question?: TargetWizardQuestion | null;
   draft?: TargetDraft | null;
   suggestedTodos?: SuggestedTargetTodo[];
+  /** 展开前的任务模板，用于修改日期后重新排期 */
+  todoTemplates?: SuggestedTargetTodo[];
   syncTodosRecommended?: boolean;
 }
 
@@ -430,36 +436,35 @@ export interface TargetWizardChatMessage {
 }
 
 const TARGET_WIZARD_SYSTEM = `你是目标规划教练，通过多轮对话帮用户制定可执行的目标（SMART）。
-层级说明：目标(Target)是长期方向；其下可拆计划(Plan)与具体任务(Todo)。健身等目标通常需要同步创建周期性任务到任务列表。
+层级：目标(Target) → 计划(Plan) → 任务(Todo)。可执行目标须拆成多条带具体时间的任务（不是一条笼统任务，也不是 SQL）。
 
 每次仅返回 JSON（不要 markdown）：
 {
   "status": "asking" 或 "ready",
-  "message": "给用户的中文回复，语气亲切",
-  "question": {
-    "id": "唯一标识",
-    "type": "text" | "single" | "multi",
-    "label": "问题描述",
-    "options": [{"id":"opt1","label":"游泳"}],
-    "placeholder": "仅 type=text 时使用"
-  } 或 null,
-  "draft": {
-    "title": "目标标题",
-    "desc": "目标描述，含关键指标与运动方式等",
-    "beginTime": "yyyy-MM-dd",
-    "endTime": "yyyy-MM-dd",
-    "weight": 1-5
-  } 或 null,
+  "message": "给用户的中文回复",
+  "question": { "id","type":"text|single|multi","label","options":[],"placeholder" } 或 null,
+  "draft": { "title","desc","beginTime":"yyyy-MM-dd","endTime":"yyyy-MM-dd","weight":1-5 } 或 null,
   "suggestedTodos": [
-    {"id":"t1","title":"任务标题","desc":"可选","category":"健康|工作|学习|生活|娱乐|其他","level":"not-urgent-important"}
+    {
+      "id":"t1",
+      "title":"游泳训练",
+      "desc":"可选",
+      "category":"健康|工作|学习|生活|娱乐|其他",
+      "level":"not-urgent-important",
+      "beginTime":"yyyy-MM-ddTHH:mm",
+      "endTime":"yyyy-MM-ddTHH:mm"
+    }
   ],
-  "syncTodosRecommended": true/false
+  "syncTodosRecommended": true
 }
 
 规则：
-- 信息不足时 status=asking，每次只问一个 question；需要选项时用 single/multi 并提供 options。
-- 信息充分时 status=ready，填满 draft；健身/学习等可执行目标应给出 3-6 条 suggestedTodos（如每周游泳、跑步等），syncTodosRecommended 一般为 true。
-- 日期相对「今天」换算为 yyyy-MM-dd。`;
+- 信息不足：status=asking，每次只问一个问题。
+- 信息充分：status=ready，填满 draft。
+- suggestedTodos 是「任务模板」数组（每种运动/行动一条），须含 beginTime/endTime；系统会按「每周N次」在目标周期内自动展开为多次具体任务。
+- 用户说「一周三次运动」：suggestedTodos 可列 1～3 种运动模板（如游泳、跑步），不要只给 1 条；频次写在 draft.desc（如：每周运动 3 次）。
+- 模板任务的 endTime 可取目标周期内第一次计划日的 18:30，beginTime 提前 1 小时。
+- 不要返回 SQL；由前端调用接口批量创建多条任务记录。`;
 
 function addDays(base: Date, days: number): string {
   const d = new Date(base);
@@ -522,71 +527,90 @@ function mockTargetWizardTurn(
     ? `体重目标：${metricMatch[1]} → ${metricMatch[2]}（斤）`
     : '结合饮食与运动规律减脂';
 
-  const suggestedTodos: SuggestedTargetTodo[] = sports.slice(0, 4).map((s, i) => ({
-    id: `mock-${i}`,
-    title: `每周${s}训练`,
-    desc: '每次 30-45 分钟，计入本月健身目标',
-    category: '健康',
-    level: 'not-urgent-important' as Todo['level'],
-  }));
+  const timesPerWeek = parseTimesPerWeek(combined) || 3;
+  const templates: SuggestedTargetTodo[] =
+    sports.length > 0
+      ? sports.slice(0, 4).map((s, i) => ({
+          id: `mock-${i}`,
+          title: `${s}训练`,
+          desc: '每次 30-45 分钟',
+          category: '健康',
+          level: 'not-urgent-important' as Todo['level'],
+        }))
+      : [
+          {
+            id: 'mock-0',
+            title: '游泳训练',
+            desc: '每次 30 分钟',
+            category: '健康',
+            level: 'not-urgent-important' as Todo['level'],
+          },
+          {
+            id: 'mock-1',
+            title: '跑步训练',
+            desc: '每次 5 公里或 30 分钟',
+            category: '健康',
+            level: 'not-urgent-important' as Todo['level'],
+          },
+        ];
 
-  if (suggestedTodos.length === 0) {
-    suggestedTodos.push(
-      {
-        id: 'mock-0',
-        title: '每周游泳 2 次',
-        desc: '每次 30 分钟',
-        category: '健康',
-        level: 'not-urgent-important',
-      },
-      {
-        id: 'mock-1',
-        title: '每周跑步 2 次',
-        desc: '每次 5 公里或 30 分钟',
-        category: '健康',
-        level: 'not-urgent-important',
-      }
-    );
-  }
+  const draft = {
+    title: '一个月健身减重计划',
+    desc: `${descMetric}。每周运动 ${timesPerWeek} 次；主要方式：${sportText}。`,
+    beginTime: begin,
+    endTime: end,
+    weight: 4,
+  };
+
+  const expanded = expandSuggestedTodos(draft, templates, combined);
 
   return {
     status: 'ready',
-    message: `已为你整理好「一个月健身」目标方案，运动方式：${sportText}。请确认下方信息，并可选择同步到任务列表。`,
+    message: `已生成目标方案（${sportText}），并按每周 ${timesPerWeek} 次展开为 ${expanded.length} 条带时间的具体任务，请确认后保存。`,
     question: null,
-    draft: {
-      title: '一个月健身减重计划',
-      desc: `${descMetric}。主要运动：${sportText}。建议配合饮食控制与睡眠。`,
-      beginTime: begin,
-      endTime: end,
-      weight: 4,
-    },
-    suggestedTodos,
+    draft,
+    suggestedTodos: expanded,
     syncTodosRecommended: true,
   };
 }
 
-function normalizeTargetWizardTurn(raw: TargetWizardTurn): TargetWizardTurn {
+function normalizeTargetWizardTurn(
+  raw: TargetWizardTurn,
+  contextText = '',
+): TargetWizardTurn {
   const weight = Math.min(5, Math.max(1, Number(raw.draft?.weight) || 3));
+  const draft = raw.draft
+    ? {
+        title: raw.draft.title || '新目标',
+        desc: raw.draft.desc || '',
+        beginTime: raw.draft.beginTime || new Date().toISOString().slice(0, 10),
+        endTime: raw.draft.endTime || addDays(new Date(), 30),
+        weight,
+      }
+    : undefined;
+
+  const baseTodos: SuggestedTargetTodo[] = (raw.suggestedTodos || []).map((t, i) => ({
+    id: t.id || `todo-${i}`,
+    title: t.title,
+    desc: t.desc,
+    category: normalizeCategory(t.category),
+    level: normalizeLevel(t.level),
+    beginTime: t.beginTime,
+    endTime: t.endTime,
+  }));
+
+  const suggestedTodos =
+    draft && baseTodos.length > 0
+      ? expandSuggestedTodos(draft, baseTodos, contextText)
+      : baseTodos;
+
   return {
     status: raw.status === 'ready' ? 'ready' : 'asking',
     message: raw.message || '请继续补充信息。',
     question: raw.question || undefined,
-    draft: raw.draft
-      ? {
-          title: raw.draft.title || '新目标',
-          desc: raw.draft.desc || '',
-          beginTime: raw.draft.beginTime || new Date().toISOString().slice(0, 10),
-          endTime: raw.draft.endTime || addDays(new Date(), 30),
-          weight,
-        }
-      : undefined,
-    suggestedTodos: (raw.suggestedTodos || []).map((t, i) => ({
-      id: t.id || `todo-${i}`,
-      title: t.title,
-      desc: t.desc,
-      category: normalizeCategory(t.category),
-      level: normalizeLevel(t.level),
-    })),
+    draft,
+    suggestedTodos,
+    todoTemplates: baseTodos,
     syncTodosRecommended: Boolean(raw.syncTodosRecommended),
   };
 }
@@ -605,7 +629,11 @@ export async function nextTargetWizardTurn(
 
   if (!isAiConfigured()) {
     await new Promise((r) => setTimeout(r, 500));
-    return normalizeTargetWizardTurn(mockTargetWizardTurn(history, input || labels.join(' '), labels));
+    const combined = `${history.map((m) => m.content).join(' ')} ${input} ${labels.join(' ')}`;
+    return normalizeTargetWizardTurn(
+      mockTargetWizardTurn(history, input || labels.join(' '), labels),
+      combined,
+    );
   }
 
   const today = new Date().toISOString().slice(0, 10);
@@ -626,5 +654,5 @@ export async function nextTargetWizardTurn(
     payload || input
   );
 
-  return normalizeTargetWizardTurn(raw);
+  return normalizeTargetWizardTurn(raw, `${transcript} ${input} ${labels.join(' ')}`);
 }

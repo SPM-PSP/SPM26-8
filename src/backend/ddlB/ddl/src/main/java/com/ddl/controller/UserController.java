@@ -8,6 +8,8 @@ import com.ddl.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
@@ -32,6 +34,12 @@ public class UserController {
     public Result updateInfo(@RequestBody User user) {
         userService.saveOrUpdate(user);
         return Result.success("更新成功");
+    }
+
+    /** 列出所有用户（切换账号用） */
+    @GetMapping("/list")
+    public Result<List<User>> listUsers() {
+        return Result.success(userService.listAll());
     }
 
     @GetMapping("/profile")

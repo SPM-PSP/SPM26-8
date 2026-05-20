@@ -21,10 +21,22 @@ public class ReminderController {
     @Autowired
     private EmailService emailService;
 
-    /** 手动触发一次扫描（调试） */
+    /**
+     * 手动检查临期任务：对当前用户重发 24h / 2h 内到期的提醒邮件（忽略是否已发过）
+     */
     @PostMapping("/scan")
-    public Result<Integer> scan() {
-        int sent = todoReminderService.scanAndSendReminders();
+    public Result<Integer> scan(@RequestParam String openid) {
+        User user = userService.getByOpenid(openid);
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            return Result.error("请先绑定邮箱");
+        }
+        if (user.getIsReminderOn() == null || user.getIsReminderOn() != 1) {
+            return Result.error("请先开启邮件提醒");
+        }
+        int sent = todoReminderService.scanDueRemindersForUser(user);
         return Result.success("扫描完成", sent);
     }
 

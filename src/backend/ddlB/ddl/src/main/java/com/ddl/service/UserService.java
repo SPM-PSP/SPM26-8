@@ -9,4 +9,6 @@ public interface UserService extends IService<User> {
     User getByOpenid(String openid);
 
     User updateReminderSettings(com.ddl.dto.ReminderSettingsDTO dto);
+
+    java.util.List<User> listAll();
 }

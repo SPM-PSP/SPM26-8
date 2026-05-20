@@ -15,3 +15,9 @@ CREATE TABLE IF NOT EXISTS `todo_reminder_log` (
   PRIMARY KEY (`uuid`),
   KEY `idx_reminder_todo` (`todo_id`, `reminder_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='任务邮件提醒记录';
+
+CREATE TABLE IF NOT EXISTS `ddl_app_meta` (
+  `meta_key` varchar(64) NOT NULL,
+  `meta_value` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`meta_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

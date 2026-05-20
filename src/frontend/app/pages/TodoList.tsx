@@ -11,6 +11,7 @@ import { FilterStatus } from '../types';
 import { format, differenceInHours, differenceInSeconds } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { TodoBreakdownPanel } from '../components/ai/TodoBreakdownPanel';
+import { useAuth } from '../context/AuthContext';
 
 const LEVEL_CONFIG = {
   'urgent-important': { label: '重要紧急', color: 'bg-[#d4726f]', icon: AlertCircle },
@@ -20,7 +21,8 @@ const LEVEL_CONFIG = {
 };
 
 export function TodoList() {
-  const { todos, updateTodo } = useTodos();
+  const { user } = useAuth();
+  const { todos, updateTodo, userId } = useTodos();
   const { targets } = useTargets();
   const { plans } = usePlans();
   const [filter, setFilter] = useState<FilterStatus>('all');
@@ -100,7 +102,10 @@ export function TodoList() {
     <div className="min-h-screen bg-[#f8f8f6] pb-20">
       <div className="bg-white/95 backdrop-blur-lg" style={{boxShadow: '0 2px 16px rgba(0, 0, 0, 0.04)'}}>
         <div className="max-w-screen-xl mx-auto px-6 py-5">
-          <h1 className="text-xl font-semibold text-[#4a4a4a] mb-4">任务</h1>
+          <h1 className="text-xl font-semibold text-[#4a4a4a]">任务</h1>
+          <p className="text-xs text-[#8b8680] mt-1 mb-4">
+            {user?.nickname || userId} · 共 {todos.length} 条（来自数据库 user_id={userId}）
+          </p>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {[
               { value: 'all', label: '全部' },

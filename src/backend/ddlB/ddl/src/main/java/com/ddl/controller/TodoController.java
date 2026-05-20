@@ -18,8 +18,17 @@ public class TodoController {
         return Result.success(todoTaskService.getSortedTasks(userId));
     }
 
+    /**
+     * 全量同步：mode=replace（默认）先删后插；mode=append 仅增量写入
+     */
     @PostMapping("/backup")
-    public Result backup(@RequestBody List<TodoTask> tasks, @RequestParam String userId) {
-        return todoTaskService.syncTasks(userId, tasks) ? Result.success("同步成功") : Result.error("失败");
+    public Result backup(
+            @RequestBody List<TodoTask> tasks,
+            @RequestParam String userId,
+            @RequestParam(defaultValue = "replace") String mode) {
+        boolean ok = "append".equalsIgnoreCase(mode)
+                ? todoTaskService.appendTasks(userId, tasks)
+                : todoTaskService.syncTasks(userId, tasks);
+        return ok ? Result.success("同步成功") : Result.error("失败");
     }
 }

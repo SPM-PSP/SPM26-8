@@ -82,4 +82,5 @@ export interface BackendNote {
 export interface LoginDTO {
   code?: string;
   mockId: string;
+  nickname?: string;
 }

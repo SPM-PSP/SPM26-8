@@ -10,6 +10,8 @@ import com.ddl.mapper.UserMapper;
 import com.ddl.service.UserService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
     @Override
@@ -21,7 +23,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             // 如果不存在，静默注册一个模拟用户
             user = new User();
             user.setOpenid(mockId);
-            user.setNickname("模拟测试用户");
+            String nick = loginDTO.getNickname();
+            user.setNickname(nick != null && !nick.isBlank() ? nick.trim() : ("用户 " + mockId));
             user.setIsReminderOn(1);
             user.setDefaultAdvanceMinutes(30);
             user.setRemindBefore24h(1);
@@ -56,5 +59,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         this.updateById(user);
         return user;
+    }
+
+    @Override
+    public List<User> listAll() {
+        return this.list(new LambdaQueryWrapper<User>().orderByAsc(User::getOpenid));
     }
 }
