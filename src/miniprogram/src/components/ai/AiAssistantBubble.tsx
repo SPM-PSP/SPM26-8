@@ -37,13 +37,13 @@ export function AiAssistantBubble({ todos }: AiAssistantBubbleProps) {
         onClick={() => setOpen(true)}
         style={{
           position: 'fixed', right: '36rpx', bottom: '320rpx', zIndex: 40,
-          width: '100rpx', height: '100rpx', borderRadius: '50%',
+          width: '80rpx', height: '80rpx', borderRadius: '50%',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: 'linear-gradient(135deg, #88a096, #d4726f)',
           boxShadow: `0 4px 20px rgba(136,160,150,0.3)${insight.hasAlert ? ', 0 0 0 6rpx rgba(212,114,111,0.3)' : ''}`,
         }}
       >
-        <Text style={{ fontSize: '44rpx' }}>🤖</Text>
+        <Text style={{ fontSize: '36rpx' }}>🤖</Text>
         {insight.hasAlert && (
           <View style={{
             position: 'absolute', top: '-4rpx', right: '-4rpx',
@@ -65,8 +65,9 @@ export function AiAssistantBubble({ todos }: AiAssistantBubbleProps) {
           <View
             onClick={(e) => e.stopPropagation()}
             style={{
-              width: '600rpx', maxHeight: '80vh', backgroundColor: '#fff',
-              borderRadius: '24rpx', padding: '36rpx', overflow: 'auto',
+              width: '85%', boxSizing: 'border-box', maxHeight: '80vh',
+              backgroundColor: '#fff', borderRadius: '24rpx',
+              padding: '36rpx', overflow: 'auto',
             }}
           >
             <Text style={{ fontSize: '32rpx', fontWeight: 600, color: '#4a4a4a', marginBottom: '24rpx', display: 'block' }}>

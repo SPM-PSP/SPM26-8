@@ -335,14 +335,14 @@ export default function TodoList() {
         onClick={() => Taro.navigateTo({ url: '/pages/todo-add/index' })}
         style={{
           position: 'fixed', right: '36rpx', bottom: '180rpx',
-          width: '100rpx', height: '100rpx', borderRadius: '50%',
+          width: '80rpx', height: '80rpx', borderRadius: '50%',
           background: 'linear-gradient(135deg, #d4726f, #e9b893)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: '0 4px 20px rgba(212,114,111,0.3)',
           zIndex: 30,
         }}
       >
-        <Text style={{ color: '#fff', fontSize: '48rpx', lineHeight: 1 }}>+</Text>
+        <Text style={{ color: '#fff', fontSize: '40rpx', lineHeight: 1 }}>+</Text>
       </View>
 
       {/* 灵动输入按钮 */}
@@ -350,14 +350,14 @@ export default function TodoList() {
         onClick={() => setSmartInputOpen(true)}
         style={{
           position: 'fixed', right: '36rpx', bottom: '440rpx',
-          width: '100rpx', height: '100rpx', borderRadius: '50%',
+          width: '80rpx', height: '80rpx', borderRadius: '50%',
           backgroundColor: '#fff',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
           zIndex: 30,
         }}
       >
-        <Text style={{ fontSize: '36rpx' }}>✨</Text>
+        <Text style={{ fontSize: '32rpx' }}>✨</Text>
       </View>
 
       <AiAssistantBubble todos={todos} />
