@@ -20,7 +20,7 @@ public class PlanController {
 
     /**
      * 恢复/获取云端计划列表数据 (GET请求)
-     * * @param userId 用户的唯一标识 (通过 URL Query 参数传递，例如：/api/plan/restore?userId=123)
+     * * @param userId 用户的唯一标识 (通过 URL Query 参数传递)
      * @return 统一响应对象 Result，成功时其 data 字段包含该用户的计划数据列表
      */
     @GetMapping("/restore")
