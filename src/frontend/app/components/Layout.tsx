@@ -4,10 +4,14 @@ import { Toaster } from './ui/sonner';
 
 export function Layout() {
   return (
-    <div className="min-h-screen bg-[#f8f8f6]">
-      <Outlet />
-      <BottomNav />
-      <Toaster />
+    <div className="phone-shell">
+      <div className="phone-frame">
+        <div className="phone-frame__body">
+          <Outlet />
+        </div>
+        <BottomNav />
+        <Toaster />
+      </div>
     </div>
   );
 }

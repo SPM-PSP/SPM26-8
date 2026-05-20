@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import { PageHeader } from '../components/PageHeader';
+import { DateTimeLocalField } from '../components/DateTimeLocalField';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
@@ -332,27 +333,19 @@ export function AddTodo() {
         </div>
 
         <div className="bg-white rounded-[20px] p-5 space-y-6" style={{ boxShadow: '0 2px 12px rgba(0, 0, 0, 0.04)' }}>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="beginTime">开始时间</Label>
-              <Input
-                id="beginTime"
-                type="datetime-local"
-                value={beginTime}
-                onChange={(e) => setBeginTime(e.target.value)}
-                className="mt-2"
-              />
-            </div>
-            <div>
-              <Label htmlFor="endTime">结束时间</Label>
-              <Input
-                id="endTime"
-                type="datetime-local"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="mt-2"
-              />
-            </div>
+          <div className="space-y-4">
+            <DateTimeLocalField
+              id="beginTime"
+              label="开始时间"
+              value={beginTime}
+              onChange={setBeginTime}
+            />
+            <DateTimeLocalField
+              id="endTime"
+              label="结束时间"
+              value={endTime}
+              onChange={setEndTime}
+            />
           </div>
 
           <div>
