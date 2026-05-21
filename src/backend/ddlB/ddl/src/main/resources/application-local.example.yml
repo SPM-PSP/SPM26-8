@@ -2,7 +2,7 @@
 spring:
   datasource:
     # 与本机 MySQL root 密码一致；错误会报 Access denied for user 'root'@'localhost'
-    password: "050501"
+    password: "Xy666666."
   mail:
     host: smtp.qq.com
     port: 465
