@@ -1,0 +1,20 @@
+2026-05-22 14:32:49,449 INFO o.a.j.u.JMeterUtils: Setting Locale to zh_CN
+2026-05-22 14:32:49,482 INFO o.a.j.JMeter: Loading user properties from: D:\360Downloads\jmeter\apache-jmeter-5.6.3\bin\user.properties
+2026-05-22 14:32:49,483 INFO o.a.j.JMeter: Loading system properties from: D:\360Downloads\jmeter\apache-jmeter-5.6.3\bin\system.properties
+2026-05-22 14:32:49,499 INFO o.a.j.JMeter: Copyright (c) 1998-2024 The Apache Software Foundation
+2026-05-22 14:32:49,499 INFO o.a.j.JMeter: Version 5.6.3
+2026-05-22 14:32:49,499 INFO o.a.j.JMeter: java.version=1.8.0_20
+2026-05-22 14:32:49,499 INFO o.a.j.JMeter: java.vm.name=Java HotSpot(TM) 64-Bit Server VM
+2026-05-22 14:32:49,500 INFO o.a.j.JMeter: os.name=Windows 8.1
+2026-05-22 14:32:49,500 INFO o.a.j.JMeter: os.arch=amd64
+2026-05-22 14:32:49,500 INFO o.a.j.JMeter: os.version=6.3
+2026-05-22 14:32:49,500 INFO o.a.j.JMeter: file.encoding=GBK
+2026-05-22 14:32:49,500 INFO o.a.j.JMeter: java.awt.headless=null
+2026-05-22 14:32:49,500 INFO o.a.j.JMeter: Max memory     =3665297408
+2026-05-22 14:32:49,500 INFO o.a.j.JMeter: Available Processors =12
+2026-05-22 14:32:49,515 INFO o.a.j.JMeter: Default Locale=中文 (中国)
+2026-05-22 14:32:49,515 INFO o.a.j.JMeter: JMeter  Locale=中文 (中国)
+2026-05-22 14:32:49,515 INFO o.a.j.JMeter: JMeterHome=D:\360Downloads\jmeter\apache-jmeter-5.6.3
+2026-05-22 14:32:49,516 INFO o.a.j.JMeter: user.dir  =D:\项目综合实践\SPM26-8-git
+2026-05-22 14:32:49,516 INFO o.a.j.JMeter: PWD       =D:\项目综合实践\SPM26-8-git
+2026-05-22 14:32:49,517 INFO o.a.j.JMeter: IP: 28.0.0.1 Name: LAPTOP-FNJBQGF3 FullName: LAPTOP-FNJBQGF3
