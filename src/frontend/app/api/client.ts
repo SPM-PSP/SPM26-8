@@ -6,7 +6,8 @@ import { toast } from 'sonner';
 
 // 创建 axios 实例
 export const apiClient = axios.create({
-  baseURL: 'http://localhost:8080/api',  // 后端地址
+  // 默认 /api 走 Vite 代理（局域网访问友好）；直连后端可设 VITE_API_BASE_URL=http://本机IP:8080/api
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   timeout: 10000,  // 10秒超时
   headers: {
     'Content-Type': 'application/json',

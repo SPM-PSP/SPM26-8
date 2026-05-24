@@ -1,14 +1,26 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { Plus, Target as TargetIcon, TrendingUp } from 'lucide-react';
+import { toast } from 'sonner';
 import { EmptyState } from '../components/EmptyState';
-import { Badge } from '../components/ui/badge';
-import { Progress } from '../components/ui/progress';
 import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../components/ui/alert-dialog';
 import { useTargets } from '../hooks/useTargets';
 import { useTodos } from '../hooks/useTodos';
 import { usePlans } from '../hooks/usePlans';
+import { useTargetActions } from '../hooks/useTargetActions';
 import { AiAssistantBubble } from '../components/ai/AiAssistantBubble';
+import { TargetListItem } from '../components/TargetListItem';
+import type { Target } from '../types';
 
 type ViewMode = 'list' | 'matrix';
 
@@ -16,21 +28,31 @@ export function TargetList() {
   const { targets } = useTargets();
   const { todos } = useTodos();
   const { plans } = usePlans();
+  const { removeTargetCascade, getTodosByTarget, getPlansByTarget } = useTargetActions();
   const [viewMode, setViewMode] = useState<ViewMode>('matrix');
+  const [pendingDelete, setPendingDelete] = useState<Target | null>(null);
 
   const getTargetProgress = (targetId: string) => {
-    const targetPlans = plans.filter(p => p.targetId === targetId);
+    const targetPlans = plans.filter((p) => p.targetId === targetId);
     if (targetPlans.length === 0) return 0;
-    const completed = targetPlans.filter(p => p.completed).length;
+    const completed = targetPlans.filter((p) => p.completed).length;
     return (completed / targetPlans.length) * 100;
   };
 
-  // 四象限分类任务
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    await removeTargetCascade(pendingDelete.id);
+    toast.success('目标已删除');
+    setPendingDelete(null);
+  };
+
   const quadrantTasks = {
-    'urgent-important': todos.filter(t => t.level === 'urgent-important' && !t.completed),
-    'urgent-not-important': todos.filter(t => t.level === 'urgent-not-important' && !t.completed),
-    'not-urgent-important': todos.filter(t => t.level === 'not-urgent-important' && !t.completed),
-    'not-urgent-not-important': todos.filter(t => t.level === 'not-urgent-not-important' && !t.completed),
+    'urgent-important': todos.filter((t) => t.level === 'urgent-important' && !t.completed),
+    'urgent-not-important': todos.filter((t) => t.level === 'urgent-not-important' && !t.completed),
+    'not-urgent-important': todos.filter((t) => t.level === 'not-urgent-important' && !t.completed),
+    'not-urgent-not-important': todos.filter(
+      (t) => t.level === 'not-urgent-not-important' && !t.completed,
+    ),
   };
 
   const quadrantConfig = [
@@ -64,16 +86,52 @@ export function TargetList() {
     },
   ];
 
+  const deleteDialog = (
+    <AlertDialog open={!!pendingDelete} onOpenChange={(open) => !open && setPendingDelete(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>确认删除</AlertDialogTitle>
+          <AlertDialogDescription>
+            {pendingDelete && (
+              <>
+                确定删除「{pendingDelete.title}」？删除后无法恢复。
+                {(() => {
+                  const planCount = getPlansByTarget(pendingDelete.id).length;
+                  const todoCount = getTodosByTarget(pendingDelete.id).length;
+                  if (planCount > 0 || todoCount > 0) {
+                    return ` 将同时删除 ${planCount} 个计划、${todoCount} 条任务。`;
+                  }
+                  return null;
+                })()}
+              </>
+            )}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>取消</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={confirmDelete}
+            className="bg-gradient-to-r from-[#d4726f] to-[#e9b893] hover:opacity-90"
+          >
+            删除
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   return (
     <div className="min-h-screen bg-[#f8f8f6] pb-20">
-      {/* 顶部栏 */}
-      <div className="bg-white/95 backdrop-blur-lg" style={{boxShadow: '0 2px 16px rgba(0, 0, 0, 0.04)'}}>
+      <div className="bg-white/95 backdrop-blur-lg" style={{ boxShadow: '0 2px 16px rgba(0, 0, 0, 0.04)' }}>
         <div className="max-w-screen-xl mx-auto px-6 py-5">
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <h1 className="text-xl font-semibold text-[#4a4a4a]">目标</h1>
             <Link to="/targets/new">
-              <button className="w-8 h-8 bg-gradient-to-br from-[#d4726f] to-[#e9b893] rounded-full flex items-center justify-center text-white">
-                <Plus className="w-5 h-5" />
+              <button
+                type="button"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#d4726f] to-[#e9b893] text-white"
+              >
+                <Plus className="h-5 w-5" />
               </button>
             </Link>
           </div>
@@ -87,47 +145,42 @@ export function TargetList() {
         </div>
       </div>
 
-      <div className="max-w-screen-xl mx-auto px-6 py-5 space-y-5">
+      <div className="max-w-screen-xl mx-auto space-y-5 px-6 py-5">
         {viewMode === 'matrix' ? (
           <>
-            {/* 目标进度条 */}
             {targets.length > 0 && (
-              <div className="bg-white rounded-[20px] p-5" style={{boxShadow: '0 2px 12px rgba(0, 0, 0, 0.04)'}}>
-                <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp className="w-5 h-5 text-[#d4726f]" />
+              <div className="rounded-[20px] bg-white p-5" style={{ boxShadow: '0 2px 12px rgba(0, 0, 0, 0.04)' }}>
+                <div className="mb-4 flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-[#d4726f]" />
                   <h2 className="font-semibold text-[#4a4a4a]">目标总进度</h2>
                 </div>
+                <p className="mb-3 text-xs text-[#8b8680]">左滑目标可删除</p>
                 <div className="space-y-3">
-                  {targets.slice(0, 3).map((target) => {
-                    const progress = getTargetProgress(target.id);
-                    return (
-                      <Link key={target.id} to={`/targets/${target.id}`}>
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-[#4a4a4a]">{target.title}</span>
-                            <span className="text-sm font-medium text-[#d4726f]">{Math.round(progress)}%</span>
-                          </div>
-                          <Progress value={progress} className="h-2" />
-                        </div>
-                      </Link>
-                    );
-                  })}
+                  {targets.slice(0, 3).map((target) => (
+                    <TargetListItem
+                      key={target.id}
+                      target={target}
+                      variant="compact"
+                      progress={getTargetProgress(target.id)}
+                      plansCount={plans.filter((p) => p.targetId === target.id).length}
+                      onDelete={() => setPendingDelete(target)}
+                    />
+                  ))}
                 </div>
               </div>
             )}
 
-            {/* 四象限矩阵 */}
             <div className="grid grid-cols-2 gap-3">
-              {quadrantConfig.map((quadrant, index) => {
+              {quadrantConfig.map((quadrant) => {
                 const tasks = quadrantTasks[quadrant.key as keyof typeof quadrantTasks];
                 return (
                   <div
                     key={quadrant.key}
-                    className={`${quadrant.color} ${quadrant.textColor} rounded-[20px] p-4 min-h-[180px]`}
-                    style={{boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)'}}
+                    className={`${quadrant.color} ${quadrant.textColor} min-h-[180px] rounded-[20px] p-4`}
+                    style={{ boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)' }}
                   >
                     <div className="mb-3">
-                      <h3 className="font-semibold mb-1">{quadrant.title}</h3>
+                      <h3 className="mb-1 font-semibold">{quadrant.title}</h3>
                       <p className="text-xs opacity-90">{quadrant.subtitle}</p>
                     </div>
 
@@ -138,13 +191,13 @@ export function TargetList() {
                         <>
                           {tasks.slice(0, 3).map((task) => (
                             <Link key={task.id} to={`/todos/${task.id}`}>
-                              <div className="bg-white/20 backdrop-blur-sm rounded-[12px] px-3 py-2">
-                                <p className="text-xs line-clamp-1">{task.title}</p>
+                              <div className="rounded-[12px] bg-white/20 px-3 py-2 backdrop-blur-sm">
+                                <p className="line-clamp-1 text-xs">{task.title}</p>
                               </div>
                             </Link>
                           ))}
                           {tasks.length > 3 && (
-                            <p className="text-xs opacity-70 text-center">+{tasks.length - 3} 更多</p>
+                            <p className="text-center text-xs opacity-70">+{tasks.length - 3} 更多</p>
                           )}
                         </>
                       )}
@@ -163,49 +216,28 @@ export function TargetList() {
                 description="创建你的第一个目标，开始规划未来"
               />
             ) : (
-              <div className="space-y-3">
-                {targets.map((target) => {
-                  const progress = getTargetProgress(target.id);
-                  const targetPlansCount = plans.filter(p => p.targetId === target.id).length;
-
-                  return (
-                    <Link key={target.id} to={`/targets/${target.id}`}>
-                      <div className="bg-white rounded-[20px] p-5" style={{boxShadow: '0 2px 12px rgba(0, 0, 0, 0.04)'}}>
-                        <div className="flex items-start justify-between mb-3">
-                          <h3 className="font-medium flex-1 text-[#4a4a4a]">{target.title}</h3>
-                          <Badge variant={target.completed ? 'default' : 'outline'} className="rounded-full">
-                            {target.completed ? '已完成' : '进行中'}
-                          </Badge>
-                        </div>
-
-                        {target.desc && (
-                          <p className="text-sm text-[#8b8680] mb-3 line-clamp-2 leading-relaxed">{target.desc}</p>
-                        )}
-
-                        <div className="text-xs text-[#8b8680] mb-3">
-                          <span>{targetPlansCount} 个计划</span>
-                        </div>
-
-                        {targetPlansCount > 0 && (
-                          <div>
-                            <div className="flex items-center justify-between text-xs text-[#8b8680] mb-2">
-                              <span>进度</span>
-                              <span className="text-[#d4726f] font-medium">{Math.round(progress)}%</span>
-                            </div>
-                            <Progress value={progress} className="h-2" />
-                          </div>
-                        )}
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
+              <>
+                <p className="text-xs text-[#8b8680]">左滑目标可删除</p>
+                <div className="space-y-3">
+                  {targets.map((target) => (
+                    <TargetListItem
+                      key={target.id}
+                      target={target}
+                      variant="card"
+                      progress={getTargetProgress(target.id)}
+                      plansCount={plans.filter((p) => p.targetId === target.id).length}
+                      onDelete={() => setPendingDelete(target)}
+                    />
+                  ))}
+                </div>
+              </>
             )}
           </>
         )}
       </div>
 
       <AiAssistantBubble todos={todos} />
+      {deleteDialog}
     </div>
   );
 }

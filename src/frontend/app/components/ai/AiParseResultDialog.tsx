@@ -11,6 +11,7 @@ import {
 } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import { DateTimeLocalField } from '../DateTimeLocalField';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
@@ -179,16 +180,12 @@ export function AiParseResultDialog({
             </Select>
           </div>
 
-          <div>
-            <Label htmlFor="ai-parse-end">截止时间</Label>
-            <Input
-              id="ai-parse-end"
-              type="datetime-local"
-              value={form.endTime}
-              onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))}
-              className="mt-2 bg-white"
-            />
-          </div>
+          <DateTimeLocalField
+            id="ai-parse-end"
+            label="截止时间"
+            value={form.endTime}
+            onChange={(endTime) => setForm((f) => ({ ...f, endTime }))}
+          />
         </div>
 
         <DialogFooter className="p-5 pt-2 shrink-0 flex-col sm:flex-col gap-2">

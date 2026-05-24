@@ -1,6 +1,7 @@
 // 前后端类型映射工具
 
 import { Todo, Target, Plan, Note } from '../types';
+import { defaultTargetDateRange, parseDateSafe } from './formatDate';
 import {
   BackendTodoTask,
   BackendTarget,
@@ -10,8 +11,10 @@ import {
 
 // ==================== 常量配置 ====================
 
-// 固定的模拟用户ID（后续可从登录状态获取）
-export const MOCK_USER_ID = 'mock-user';
+/** @deprecated 请使用 useAuth().userId 或 DEFAULT_USER_ID */
+export const MOCK_USER_ID = 'wch13819780501';
+
+export { DEFAULT_USER_ID } from './authStorage';
 
 // ==================== 四象限优先级映射 ====================
 
@@ -34,7 +37,19 @@ const PRIORITY_TO_LEVEL: Record<number, Todo['level']> = {
 /** datetime-local / ISO → 存库用 ISO8601 */
 export function todoTimeForStorage(value?: string): string | undefined {
   if (!value?.trim()) return undefined;
-  const d = new Date(value);
+  const v = value.trim();
+  // 仅日期：截止日当天 23:59:59（本地），便于 24h/2h 邮件提醒计算
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+    const d = new Date(`${v}T23:59:59`);
+    if (Number.isNaN(d.getTime())) return undefined;
+    return d.toISOString();
+  }
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v)) {
+    const d = new Date(v);
+    if (Number.isNaN(d.getTime())) return undefined;
+    return d.toISOString();
+  }
+  const d = new Date(v);
   if (Number.isNaN(d.getTime())) return undefined;
   return d.toISOString();
 }
@@ -57,11 +72,11 @@ export function todoTimeForInput(stored?: string): string | undefined {
  * 前端 Todo → 后端 TodoTask
  * 注意：category、isContinuous、summury 仍仅存于本地
  */
-export function toBackendTodo(todo: Todo): BackendTodoTask {
+export function toBackendTodo(todo: Todo, userId: string): BackendTodoTask {
   return {
     uuid: todo.id,
     title: todo.title,
-    content: todo.desc,  // desc → content
+    content: todo.desc ?? '',  // desc → content
     status: todo.completed ? 1 : 0,  // boolean → number
     priority: LEVEL_TO_PRIORITY[todo.level] || 1,  // 四象限 → 数字
     createdAt: todo.createdAt,
@@ -69,7 +84,7 @@ export function toBackendTodo(todo: Todo): BackendTodoTask {
     endTime: todoTimeForStorage(todo.endTime),
     planId: todo.planId,
     targetId: todo.targetId,
-    userId: MOCK_USER_ID,
+    userId,
   };
 }
 
@@ -100,14 +115,14 @@ export function fromBackendTodo(task: BackendTodoTask): Todo {
  * 前端 Target → 后端 Target
  * 注意：后端使用 progress，前端使用 completed + weight
  */
-export function toBackendTarget(target: Target): BackendTarget {
+export function toBackendTarget(target: Target, userId: string): BackendTarget {
   return {
     uuid: target.id,
     title: target.title,
     content: target.desc,  // desc → content
     progress: target.completed ? 100 : 0,  // 简化映射：完成=100，未完成=0
     createdAt: target.createdAt,
-    userId: MOCK_USER_ID,
+    userId,
   };
 }
 
@@ -115,16 +130,28 @@ export function toBackendTarget(target: Target): BackendTarget {
  * 后端 Target → 前端 Target
  */
 export function fromBackendTarget(backendTarget: BackendTarget): Target {
+  const { beginTime, endTime } = defaultTargetDateRange(backendTarget.createdAt);
   return {
     id: backendTarget.uuid,
     title: backendTarget.title,
     desc: backendTarget.content,  // content → desc
     completed: backendTarget.progress === 100,  // progress=100 视为已完成
     createdAt: backendTarget.createdAt,
-    // 前端独有字段
-    beginTime: '',
-    endTime: '',
+    beginTime,
+    endTime,
     weight: 3,  // 默认权重
+  };
+}
+
+export function mergeTargetFromBackend(backendTarget: BackendTarget, local?: Target): Target {
+  const mapped = fromBackendTarget(backendTarget);
+  if (!local) return mapped;
+  return {
+    ...mapped,
+    beginTime: parseDateSafe(local.beginTime) ? local.beginTime : mapped.beginTime,
+    endTime: parseDateSafe(local.endTime) ? local.endTime : mapped.endTime,
+    weight: local.weight ?? mapped.weight,
+    desc: local.desc?.trim() ? local.desc : mapped.desc,
   };
 }
 
@@ -133,7 +160,7 @@ export function fromBackendTarget(backendTarget: BackendTarget): Target {
 /**
  * 前端 Plan → 后端 Plan
  */
-export function toBackendPlan(plan: Plan): BackendPlan {
+export function toBackendPlan(plan: Plan, userId: string): BackendPlan {
   return {
     uuid: plan.id,
     title: plan.title,
@@ -141,7 +168,7 @@ export function toBackendPlan(plan: Plan): BackendPlan {
     progress: plan.completed ? 100 : 0,
     targetId: plan.targetId,
     createdAt: plan.createdAt,
-    userId: MOCK_USER_ID,
+    userId,
   };
 }
 
@@ -169,7 +196,7 @@ export function fromBackendPlan(backendPlan: BackendPlan): Plan {
 /**
  * 前端 Note → 后端 Note
  */
-export function toBackendNote(note: Note): BackendNote {
+export function toBackendNote(note: Note, userId: string): BackendNote {
   return {
     uuid: note.id,
     title: note.title,
@@ -177,7 +204,7 @@ export function toBackendNote(note: Note): BackendNote {
     createdAt: note.createdAt,
     planId: note.planId,
     targetId: note.targetId,
-    userId: MOCK_USER_ID,
+    userId,
   };
 }
 

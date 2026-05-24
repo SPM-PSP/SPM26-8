@@ -1,39 +1,66 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Target } from '../types';
-import { useLocalStorage } from './useLocalStorage';
+import { useUserScopedStorage } from './useUserScopedStorage';
 import { targetApi } from '../api/target';
-import { toBackendTarget, fromBackendTarget, MOCK_USER_ID } from '../utils/typeMapper';
+import { toBackendTarget, mergeTargetFromBackend } from '../utils/typeMapper';
+import { defaultTargetDateRange, parseDateSafe } from '../utils/formatDate';
+import { generateId } from '../utils/uuid';
+import { useAuth } from '../context/AuthContext';
 
 export function useTargets() {
-  const [targets, setTargets] = useLocalStorage<Target[]>('targets', []);
+  const { userId, switching } = useAuth();
+  const [targets, setTargets] = useUserScopedStorage<Target[]>('targets', userId, []);
   const [syncing, setSyncing] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // 启动时从后端拉取数据
-  useEffect(() => {
-    syncFromBackend();
-  }, []);
-
-  // 从后端拉取数据
-  const syncFromBackend = async () => {
+  const syncFromBackend = useCallback(async () => {
+    if (!userId || switching) return;
     try {
       setLoading(true);
-      const backendTargets = await targetApi.restore(MOCK_USER_ID);
-      const frontendTargets = backendTargets.map(fromBackendTarget);
-      setTargets(frontendTargets);
+      const backendTargets = await targetApi.restore(userId);
+      setTargets((prev) => {
+        const localById = new Map(prev.map((t) => [t.id, t]));
+        return backendTargets.map((bt) =>
+          mergeTargetFromBackend(bt, localById.get(bt.uuid)),
+        );
+      });
     } catch (error) {
       console.error('从后端同步目标失败:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, switching, setTargets]);
 
-  // 同步到后端
+  useEffect(() => {
+    syncFromBackend();
+  }, [syncFromBackend]);
+
+  useEffect(() => {
+    if (!userId || switching) return;
+    setTargets((prev) => {
+      let changed = false;
+      const next = prev.map((t) => {
+        if (parseDateSafe(t.beginTime) && parseDateSafe(t.endTime)) return t;
+        changed = true;
+        const defaults = defaultTargetDateRange(t.createdAt);
+        return {
+          ...t,
+          beginTime: parseDateSafe(t.beginTime) ? t.beginTime : defaults.beginTime,
+          endTime: parseDateSafe(t.endTime) ? t.endTime : defaults.endTime,
+        };
+      });
+      return changed ? next : prev;
+    });
+  }, [userId, switching, setTargets]);
+
   const syncToBackend = async (updatedTargets: Target[]) => {
+    if (!userId) return;
     try {
       setSyncing(true);
-      const backendTargets = updatedTargets.map(toBackendTarget);
-      await targetApi.backup(MOCK_USER_ID, backendTargets);
+      await targetApi.backup(
+        userId,
+        updatedTargets.map((t) => toBackendTarget(t, userId)),
+      );
     } catch (error) {
       console.error('同步目标到后端失败:', error);
     } finally {
@@ -44,7 +71,7 @@ export function useTargets() {
   const addTarget = async (target: Omit<Target, 'id' | 'createdAt'>) => {
     const newTarget: Target = {
       ...target,
-      id: crypto.randomUUID(),
+      id: generateId(),
       createdAt: new Date().toISOString(),
     };
     const updated = [...targets, newTarget];
@@ -54,20 +81,18 @@ export function useTargets() {
   };
 
   const updateTarget = async (id: string, updates: Partial<Target>) => {
-    const updated = targets.map(t => t.id === id ? { ...t, ...updates } : t);
+    const updated = targets.map((t) => (t.id === id ? { ...t, ...updates } : t));
     setTargets(updated);
     await syncToBackend(updated);
   };
 
   const deleteTarget = async (id: string) => {
-    const updated = targets.filter(t => t.id !== id);
+    const updated = targets.filter((t) => t.id !== id);
     setTargets(updated);
     await syncToBackend(updated);
   };
 
-  const getTarget = (id: string) => {
-    return targets.find(t => t.id === id);
-  };
+  const getTarget = (id: string) => targets.find((t) => t.id === id);
 
   return {
     targets,
@@ -78,5 +103,6 @@ export function useTargets() {
     syncing,
     loading,
     syncFromBackend,
+    userId,
   };
 }

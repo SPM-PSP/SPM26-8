@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import { PageHeader } from '../components/PageHeader';
+import { DateTimeLocalField } from '../components/DateTimeLocalField';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
@@ -138,7 +139,7 @@ export function AddTodo() {
     recognition.start();
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title.trim()) {
       toast.error('请输入任务标题');
       return;
@@ -163,14 +164,25 @@ export function AddTodo() {
       completed,
     };
 
-    if (isEdit && id) {
-      updateTodo(id, todoData);
-      toast.success('保存成功');
-    } else {
-      addTodo(todoData);
-      toast.success('任务创建成功');
+    try {
+      if (isEdit && id) {
+        await updateTodo(id, todoData);
+        toast.success('保存成功');
+      } else {
+        await addTodo(todoData);
+        toast.success('任务创建成功');
+      }
+      if (!endTime) {
+        toast.info('未设置结束时间：无法在截止前 24h/2h 收到邮件提醒', { duration: 5000 });
+      } else {
+        toast.info('任务已同步；截止前约 24 小时、2 小时将各发一封提醒邮件（需在「我的」绑定邮箱）', {
+          duration: 5000,
+        });
+      }
+      navigate('/');
+    } catch {
+      /* addTodo/updateTodo 或拦截器已提示 */
     }
-    navigate('/');
   };
 
   const handleDelete = () => {
@@ -332,27 +344,22 @@ export function AddTodo() {
         </div>
 
         <div className="bg-white rounded-[20px] p-5 space-y-6" style={{ boxShadow: '0 2px 12px rgba(0, 0, 0, 0.04)' }}>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="beginTime">开始时间</Label>
-              <Input
-                id="beginTime"
-                type="datetime-local"
-                value={beginTime}
-                onChange={(e) => setBeginTime(e.target.value)}
-                className="mt-2"
-              />
-            </div>
-            <div>
-              <Label htmlFor="endTime">结束时间</Label>
-              <Input
-                id="endTime"
-                type="datetime-local"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="mt-2"
-              />
-            </div>
+          <div className="space-y-4">
+            <DateTimeLocalField
+              id="beginTime"
+              label="开始时间"
+              value={beginTime}
+              onChange={setBeginTime}
+            />
+            <DateTimeLocalField
+              id="endTime"
+              label="结束时间"
+              value={endTime}
+              onChange={setEndTime}
+            />
+            <p className="text-xs text-[#8b8680] leading-relaxed">
+              填写结束时间并保存后，系统将在截止前约 24 小时、2 小时各发一封邮件（需在「我的」绑定邮箱并开启提醒）。
+            </p>
           </div>
 
           <div>

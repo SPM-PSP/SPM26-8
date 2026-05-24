@@ -18,8 +18,8 @@ public class TodoReminderService {
 
     private static final long MINUTES_24H = 24 * 60;
     private static final long MINUTES_2H = 2 * 60;
-    /** 定时任务每分钟执行，允许的时间窗口（分钟） */
-    private static final long WINDOW = 2;
+    /** 定时任务每分钟执行，允许的时间窗口（分钟），略宽以免漏发 */
+    private static final long WINDOW = 10;
 
     @Autowired
     private TodoTaskService todoTaskService;
@@ -33,6 +33,7 @@ public class TodoReminderService {
     @Autowired
     private EmailService emailService;
 
+    /** 定时任务：窄时间窗，避免重复发送 */
     public int scanAndSendReminders() {
         List<User> users = userService.list(
                 new LambdaQueryWrapper<User>()
@@ -42,12 +43,25 @@ public class TodoReminderService {
         );
         int sent = 0;
         for (User user : users) {
-            sent += processUserReminders(user);
+            sent += processUserReminders(user, false);
         }
         return sent;
     }
 
-    private int processUserReminders(User user) {
+    /**
+     * 手动检查：对指定用户重发所有「24h 内 / 2h 内」到期的临期提醒（不判断是否已发过）
+     */
+    public int scanDueRemindersForUser(User user) {
+        if (user == null || user.getEmail() == null || user.getEmail().isBlank()) {
+            return 0;
+        }
+        if (!isEnabled(user.getIsReminderOn())) {
+            return 0;
+        }
+        return processUserReminders(user, true);
+    }
+
+    private int processUserReminders(User user, boolean manualScan) {
         String userId = user.getOpenid();
         List<TodoTask> tasks = todoTaskService.list(
                 new LambdaQueryWrapper<TodoTask>()
@@ -68,16 +82,16 @@ public class TodoReminderService {
             if (minutesLeft < 0) continue;
 
             if (isEnabled(user.getRemindBefore24h())
-                    && inWindow(minutesLeft, MINUTES_24H)
-                    && !alreadySent(task.getUuid(), userId, "24h")) {
+                    && shouldRemind(minutesLeft, MINUTES_24H, manualScan)
+                    && (manualScan || !alreadySent(task.getUuid(), userId, "24h"))) {
                 if (sendReminder(user, task, "24h", minutesLeft)) {
                     sent++;
                 }
             }
 
             if (isEnabled(user.getRemindBefore2h())
-                    && inWindow(minutesLeft, MINUTES_2H)
-                    && !alreadySent(task.getUuid(), userId, "2h")) {
+                    && shouldRemind(minutesLeft, MINUTES_2H, manualScan)
+                    && (manualScan || !alreadySent(task.getUuid(), userId, "2h"))) {
                 if (sendReminder(user, task, "2h", minutesLeft)) {
                     sent++;
                 }
@@ -86,8 +100,20 @@ public class TodoReminderService {
         return sent;
     }
 
+    /** 定时：仅在「剩余约 targetMinutes」附近的 WINDOW 分钟内触发 */
     private boolean inWindow(long minutesLeft, long targetMinutes) {
         return minutesLeft <= targetMinutes && minutesLeft > targetMinutes - WINDOW;
+    }
+
+    /** 手动：凡在 targetMinutes 内到期且未过期，且对应开关开启，即发送 */
+    private boolean shouldRemind(long minutesLeft, long targetMinutes, boolean manualScan) {
+        if (minutesLeft <= 0) {
+            return false;
+        }
+        if (manualScan) {
+            return minutesLeft <= targetMinutes;
+        }
+        return inWindow(minutesLeft, targetMinutes);
     }
 
     private boolean isEnabled(Integer flag) {
@@ -127,6 +153,8 @@ public class TodoReminderService {
             reminderLogMapper.insert(log);
             return true;
         } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger(TodoReminderService.class)
+                    .warn("发送任务提醒邮件失败 todo={} type={}: {}", task.getUuid(), type, e.getMessage());
             return false;
         }
     }
@@ -143,12 +171,24 @@ public class TodoReminderService {
     }
 
     private long parseTime(String value) {
+        if (value == null || value.isBlank()) {
+            return -1;
+        }
+        String v = value.trim();
         try {
-            return Instant.parse(value).toEpochMilli();
+            return Instant.parse(v).toEpochMilli();
         } catch (Exception ignored) {
         }
         try {
-            String normalized = value.contains("T") ? value : value.replace(" ", "T");
+            // 仅日期：按当天 23:59:59 截止（与前端存库逻辑一致）
+            if (v.matches("^\\d{4}-\\d{2}-\\d{2}$")) {
+                return java.time.LocalDate.parse(v)
+                        .atTime(23, 59, 59)
+                        .atZone(ZoneId.systemDefault())
+                        .toInstant()
+                        .toEpochMilli();
+            }
+            String normalized = v.contains("T") ? v : v.replace(" ", "T");
             if (normalized.length() == 16) {
                 return java.time.LocalDateTime.parse(normalized)
                         .atZone(ZoneId.systemDefault())

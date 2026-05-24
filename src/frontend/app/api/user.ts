@@ -2,7 +2,7 @@
 
 import { apiClient } from './client';
 import { BackendUser, LoginDTO, ReminderSettingsDTO } from '../types/backend';
-import { MOCK_USER_ID } from '../utils/typeMapper';
+import { DEFAULT_USER_ID } from '../utils/authStorage';
 
 export const userApi = {
   /**
@@ -10,8 +10,12 @@ export const userApi = {
    * POST /api/user/login/mock
    * Body: LoginDTO
    */
-  async loginMock(mockId: string): Promise<BackendUser> {
-    return apiClient.post('/user/login/mock', { mockId } as LoginDTO);
+  async loginMock(mockId: string, nickname?: string): Promise<BackendUser> {
+    return apiClient.post('/user/login/mock', { mockId, nickname } as LoginDTO);
+  },
+
+  async listUsers(): Promise<BackendUser[]> {
+    return apiClient.get('/user/list');
   },
 
   /**
@@ -23,7 +27,7 @@ export const userApi = {
     return apiClient.post('/user/update', user);
   },
 
-  async getProfile(openid: string = MOCK_USER_ID): Promise<BackendUser> {
+  async getProfile(openid: string = DEFAULT_USER_ID): Promise<BackendUser> {
     return apiClient.get('/user/profile', { params: { openid } });
   },
 

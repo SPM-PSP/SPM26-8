@@ -22,23 +22,25 @@ import {
   TargetWizardQuestion,
   SuggestedTargetTodo,
 } from '../../services/ai';
+import { expandSuggestedTodos } from '../../utils/targetTodoScheduler';
 
 export interface TargetWizardResult {
   target: TargetDraft;
   todos: SuggestedTargetTodo[];
-  syncTodos: boolean;
 }
 
 interface AiTargetWizardDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onApply: (result: TargetWizardResult) => void;
+  onApply: (result: TargetWizardResult) => void | Promise<void>;
+  applying?: boolean;
 }
 
 export function AiTargetWizardDialog({
   open,
   onOpenChange,
   onApply,
+  applying = false,
 }: AiTargetWizardDialogProps) {
   const [messages, setMessages] = useState<TargetWizardChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -47,8 +49,8 @@ export function AiTargetWizardDialog({
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [reviewDraft, setReviewDraft] = useState<TargetDraft | null>(null);
   const [suggestedTodos, setSuggestedTodos] = useState<SuggestedTargetTodo[]>([]);
+  const [todoTemplates, setTodoTemplates] = useState<SuggestedTargetTodo[]>([]);
   const [selectedTodoIds, setSelectedTodoIds] = useState<Set<string>>(new Set());
-  const [syncTodos, setSyncTodos] = useState(true);
   const [phase, setPhase] = useState<'chat' | 'review'>('chat');
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -60,8 +62,8 @@ export function AiTargetWizardDialog({
     setSelectedOptions([]);
     setReviewDraft(null);
     setSuggestedTodos([]);
+    setTodoTemplates([]);
     setSelectedTodoIds(new Set());
-    setSyncTodos(true);
     setPhase('chat');
   };
 
@@ -72,6 +74,13 @@ export function AiTargetWizardDialog({
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, phase]);
+
+  useEffect(() => {
+    if (phase !== 'review' || !reviewDraft || todoTemplates.length === 0) return;
+    const expanded = expandSuggestedTodos(reviewDraft, todoTemplates, reviewDraft.desc);
+    setSuggestedTodos(expanded);
+    setSelectedTodoIds(new Set(expanded.map((t) => t.id)));
+  }, [reviewDraft?.beginTime, reviewDraft?.endTime, phase, todoTemplates, reviewDraft?.desc]);
 
   const runTurn = async (
     userText: string,
@@ -96,10 +105,11 @@ export function AiTargetWizardDialog({
 
       if (turn.status === 'ready' && turn.draft) {
         setReviewDraft(turn.draft);
+        const templates = turn.todoTemplates || turn.suggestedTodos || [];
+        setTodoTemplates(templates);
         const todos = turn.suggestedTodos || [];
         setSuggestedTodos(todos);
         setSelectedTodoIds(new Set(todos.map((t) => t.id)));
-        setSyncTodos(turn.syncTodosRecommended ?? todos.length > 0);
         setPhase('review');
       } else if (turn.question) {
         setCurrentQuestion(turn.question);
@@ -160,23 +170,17 @@ export function AiTargetWizardDialog({
     );
   };
 
-  const handleApply = () => {
+  const handleApply = async () => {
     if (!reviewDraft?.title.trim()) {
       toast.error('请填写目标标题');
       return;
     }
     const todos = suggestedTodos.filter((t) => selectedTodoIds.has(t.id));
-    onApply({
+    await onApply({
       target: { ...reviewDraft, title: reviewDraft.title.trim() },
       todos,
-      syncTodos: syncTodos && todos.length > 0,
     });
     onOpenChange(false);
-    toast.success(
-      syncTodos && todos.length > 0
-        ? '已填入表单，保存目标时将同步创建任务'
-        : '已填入目标表单'
-    );
   };
 
   return (
@@ -363,7 +367,7 @@ export function AiTargetWizardDialog({
               <div className="bg-white rounded-[16px] p-4 shadow-sm space-y-3">
                 <p className="text-sm font-medium text-[#4a4a4a]">建议同步到任务栏</p>
                 <p className="text-xs text-[#8b8680]">
-                  这些是达成目标的具体行动，勾选后将在保存目标时一并创建（关联本目标）
+                  已按目标周期与每周频次展开为 {suggestedTodos.length} 条任务（修改起止日期会自动重排）
                 </p>
                 {suggestedTodos.map((todo) => (
                   <label
@@ -386,13 +390,14 @@ export function AiTargetWizardDialog({
                       {todo.desc && (
                         <p className="text-xs text-[#8b8680] mt-0.5">{todo.desc}</p>
                       )}
+                      {todo.endTime && (
+                        <p className="text-xs text-[#88a096] mt-0.5">
+                          截止：{todo.endTime.replace('T', ' ')}
+                        </p>
+                      )}
                     </div>
                   </label>
                 ))}
-                <label className="flex items-center gap-2 text-sm text-[#4a4a4a]">
-                  <Checkbox checked={syncTodos} onCheckedChange={(c) => setSyncTodos(!!c)} />
-                  保存目标时同步创建所选任务
-                </label>
               </div>
             )}
 
@@ -400,10 +405,15 @@ export function AiTargetWizardDialog({
               <Button
                 type="button"
                 onClick={handleApply}
+                disabled={applying}
                 className="w-full rounded-full bg-gradient-to-r from-[#88a096] to-[#7a9188] text-white"
               >
-                <Check className="w-4 h-4 mr-2" />
-                填入表单
+                {applying ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Check className="w-4 h-4 mr-2" />
+                )}
+                确认并创建目标与任务
               </Button>
               <Button
                 type="button"

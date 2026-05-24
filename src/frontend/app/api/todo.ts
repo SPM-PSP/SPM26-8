@@ -21,7 +21,14 @@ export const todoApi = {
    */
   async backup(userId: string, todos: BackendTodoTask[]): Promise<void> {
     return apiClient.post('/todo/backup', todos, {
-      params: { userId },
+      params: { userId, mode: 'replace' },
+    });
+  },
+
+  /** 增量添加（走已有 backup 接口，mode=append） */
+  async append(userId: string, todos: BackendTodoTask[]): Promise<void> {
+    return apiClient.post('/todo/backup', todos, {
+      params: { userId, mode: 'append' },
     });
   },
 };
